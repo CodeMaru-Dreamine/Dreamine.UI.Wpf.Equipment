@@ -1,0 +1,15 @@
+﻿<Window
+    x:Class="Dreamine.UI.Wpf.Equipment.DreamineVirtualKeyboard.DreamineVirtualKeyboardWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:Dreamine.UI.Wpf.Equipment.DreamineVirtualKeyboard"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    AllowsTransparency="True"
+    Background="Transparent"
+    ResizeMode="NoResize"
+    SizeToContent="WidthAndHeight"
+    WindowStyle="None"
+    mc:Ignorable="d">
+    <local:DreamineVirtualKeyboardUI x:Name="VirtualKeyboardComp" />
+</Window>

@@ -1,0 +1,175 @@
+﻿<UserControl
+    x:Class="Dreamine.UI.Wpf.Equipment.DreamineVirtualKeyboard.DreamineFullKeyboardLayout"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:control="clr-namespace:Dreamine.UI.Wpf.Equipment.DreamineVirtualKeyboard"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:Dreamine.UI.Wpf.Equipment.DreamineVirtualKeyboard"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    MinWidth="900"
+    MinHeight="300"
+    MaxWidth="900"
+    MaxHeight="300"
+    mc:Ignorable="d">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition />
+            <RowDefinition />
+            <RowDefinition />
+            <RowDefinition />
+            <RowDefinition />
+        </Grid.RowDefinitions>
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition Width="120" />
+            </Grid.ColumnDefinitions>
+            <!--#region Grid.Row=0 Content-->
+            <control:Key Grid.Column="0" KeyCode="VcEscape" />
+            <control:Key Grid.Column="1" KeyCode="VcBackQuote" />
+            <control:Key Grid.Column="2" KeyCode="Vc1" />
+            <control:Key Grid.Column="3" KeyCode="Vc2" />
+            <control:Key Grid.Column="4" KeyCode="Vc3" />
+            <control:Key Grid.Column="5" KeyCode="Vc4" />
+            <control:Key Grid.Column="6" KeyCode="Vc5" />
+            <control:Key Grid.Column="7" KeyCode="Vc6" />
+            <control:Key Grid.Column="8" KeyCode="Vc7" />
+            <control:Key Grid.Column="9" KeyCode="Vc8" />
+            <control:Key Grid.Column="10" KeyCode="Vc9" />
+            <control:Key Grid.Column="11" KeyCode="Vc0" />
+            <control:Key Grid.Column="12" KeyCode="VcMinus" />
+            <control:Key Grid.Column="13" KeyCode="VcEquals" />
+            <control:Key Grid.Column="14" KeyCode="VcBackspace" />
+            <!--#endregion-->
+        </Grid>
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1.8*" />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition Width="1.8*" />
+            </Grid.ColumnDefinitions>
+            <!--#region Grid.row=1 Content-->
+            <control:Key Grid.Column="0" KeyCode="VcTab" />
+            <control:Key Grid.Column="1" KeyCode="VcQ" />
+            <control:Key Grid.Column="2" KeyCode="VcW" />
+            <control:Key Grid.Column="3" KeyCode="VcE" />
+            <control:Key Grid.Column="4" KeyCode="VcR" />
+            <control:Key Grid.Column="5" KeyCode="VcT" />
+            <control:Key Grid.Column="6" KeyCode="VcY" />
+            <control:Key Grid.Column="7" KeyCode="VcU" />
+            <control:Key Grid.Column="8" KeyCode="VcI" />
+            <control:Key Grid.Column="9" KeyCode="VcO" />
+            <control:Key Grid.Column="10" KeyCode="VcP" />
+            <control:Key Grid.Column="11" KeyCode="VcOpenBracket" />
+            <control:Key Grid.Column="12" KeyCode="VcCloseBracket" />
+            <control:Key
+                Grid.Column="13"
+                FontSize="18"
+                KeyCode="VcBackslash" />
+            <!--#endregion-->
+        </Grid>
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*" />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition Width="2*" />
+            </Grid.ColumnDefinitions>
+            <!--#region Grid.row=2 Content-->
+            <control:Key Grid.Column="0" KeyCode="VcCapsLock" />
+            <control:Key Grid.Column="1" KeyCode="VcA" />
+            <control:Key Grid.Column="2" KeyCode="VcS" />
+            <control:Key Grid.Column="3" KeyCode="VcD" />
+            <control:Key Grid.Column="4" KeyCode="VcF" />
+            <control:Key Grid.Column="5" KeyCode="VcG" />
+            <control:Key Grid.Column="6" KeyCode="VcH" />
+            <control:Key Grid.Column="7" KeyCode="VcJ" />
+            <control:Key Grid.Column="8" KeyCode="VcK" />
+            <control:Key Grid.Column="9" KeyCode="VcL" />
+            <control:Key Grid.Column="10" KeyCode="VcSemicolon" />
+            <control:Key Grid.Column="11" KeyCode="VcQuote" />
+            <control:Key
+                Grid.Column="12"
+                FontSize="15"
+                KeyCode="VcEnter" />
+            <!--#endregion-->
+        </Grid>
+        <Grid Grid.Row="3">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2.2*" />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <!--#region Grid.Row=3 Content-->
+            <control:Key Grid.Column="0" KeyCode="VcLeftShift" />
+            <control:Key Grid.Column="1" KeyCode="VcZ" />
+            <control:Key Grid.Column="2" KeyCode="VcX" />
+            <control:Key Grid.Column="3" KeyCode="VcC" />
+            <control:Key Grid.Column="4" KeyCode="VcV" />
+            <control:Key Grid.Column="5" KeyCode="VcB" />
+            <control:Key Grid.Column="6" KeyCode="VcN" />
+            <control:Key Grid.Column="7" KeyCode="VcM" />
+            <control:Key Grid.Column="8" KeyCode="VcComma" />
+            <control:Key Grid.Column="9" KeyCode="VcPeriod" />
+            <control:Key Grid.Column="10" KeyCode="VcSlash" />
+            <control:Key Grid.Column="11" KeyCode="VcLeft" />
+            <control:Key Grid.Column="12" KeyCode="VcRight" />
+            <!--#endregion-->
+        </Grid>
+        <Grid Grid.Row="4">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*" />
+                <ColumnDefinition Width="10*" />
+                <ColumnDefinition />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <control:Key Grid.Column="0" KeyCode="VcLeftControl" />
+            <control:Key Grid.Column="1" KeyCode="VcSpace" />
+            <Button x:Name="InputModeBtn" Grid.Column="2" />
+            <Button x:Name="LangBtn" Grid.Column="3" />
+        </Grid>
+    </Grid>
+</UserControl>
