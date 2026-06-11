@@ -1,99 +1,123 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using System;
 using System.Windows.Input;
 using System.Windows.Media;
-using VsLibrary.Common.MVVM.ViewModels;
+using Dreamine.MVVM.ViewModels;
 
-namespace Dreamine.UI.Wpf.Equipment.Popup
+namespace Dreamine.UI.Wpf.Equipment.Popup;
+
+using Dreamine.UI.Abstractions.Popup;
+
+/// <summary>BlinkPopupWindow용 ViewModel.</summary>
+public sealed class DreamineBlinkPopupWindowViewModel : ViewModelBase
 {
-	/// <summary>\brief BlinkPopupWindow용 ViewModel(툴킷 Source Generator 기반).</summary>
-	public sealed partial class DreamineBlinkPopupWindowViewModel : ViewModelBase
-	{
-		[ObservableProperty] private string? _title;
-		[ObservableProperty] private string? _message;
-		[ObservableProperty] private object? _content;
-		[ObservableProperty] private string? _okText;
-		[ObservableProperty] private string? _cancelText;
+    private string? _title;
+    public string? Title { get => _title; set => SetProperty(ref _title, value); }
 
-		/// <summary>\brief 모달 여부.</summary>
-		public bool IsModal { get; }
+    private string? _message;
+    public string? Message { get => _message; set => SetProperty(ref _message, value); }
 
-		[ObservableProperty] private bool _topMost;
-		[ObservableProperty] private bool _fullscreen;
-		[ObservableProperty] private bool _useBlink;
+    private object? _content;
+    public object? Content { get => _content; set => SetProperty(ref _content, value); }
 
-		/// <summary>\brief 중앙 카드 사용 여부.</summary>
-		[ObservableProperty] private bool _useContentCard;
+    private string? _okText;
+    public string? OkText
+    {
+        get => _okText;
+        set
+        {
+            if (SetProperty(ref _okText, value))
+            {
+                OnPropertyChanged(nameof(OkVisible));
+                ((RelayCommand)OkCommand).RaiseCanExecuteChanged();
+            }
+        }
+    }
 
-		[ObservableProperty] private Color _rootColor1;
-		[ObservableProperty] private Color _rootColor2;
-		[ObservableProperty] private Color _foregroundColor;
-		[ObservableProperty] private double _opacity1;
-		[ObservableProperty] private double _opacity2;
-		[ObservableProperty] private int _blinkIntervalMs;
-		[ObservableProperty] private int _blinkRepeatCount;
+    private string? _cancelText;
+    public string? CancelText
+    {
+        get => _cancelText;
+        set
+        {
+            if (SetProperty(ref _cancelText, value))
+            {
+                OnPropertyChanged(nameof(CancelVisible));
+                ((RelayCommand)CancelCommand).RaiseCanExecuteChanged();
+            }
+        }
+    }
 
-		[ObservableProperty] private double _titleFontSizeValue;
-		[ObservableProperty] private double _messageFontSizeValue;
+    public bool IsModal { get; }
 
-		/// <summary>\brief 닫힘 요청(코드비하인드에서 수신).</summary>
-		public event EventHandler<bool?>? CloseRequested;
+    private bool _topMost;
+    public bool TopMost { get => _topMost; set => SetProperty(ref _topMost, value); }
 
-		/// <summary>\brief OK 버튼 표시 가능 여부(null/빈문자면 숨김).</summary>
-		public bool OkVisible => !string.IsNullOrEmpty(OkText);
+    private bool _fullscreen;
+    public bool Fullscreen { get => _fullscreen; set => SetProperty(ref _fullscreen, value); }
 
-		/// <summary>\brief Cancel 버튼 표시 가능 여부(null/빈문자면 숨김).</summary>
-		public bool CancelVisible => !string.IsNullOrEmpty(CancelText);
+    private bool _useBlink;
+    public bool UseBlink { get => _useBlink; set => SetProperty(ref _useBlink, value); }
 
-		/// <summary>\brief 옵션 DTO로부터 초기화.</summary>
-		public DreamineBlinkPopupWindowViewModel(BlinkPopupOptions opt)
-		{
-			_title = opt.Title;
-			_message = opt.Message;
-			_content = opt.Content;
+    private bool _useContentCard;
+    public bool UseContentCard { get => _useContentCard; set => SetProperty(ref _useContentCard, value); }
 
-			_okText = opt.OkText;
-			_cancelText = opt.CancelText;
+    private Color _rootColor1;
+    public Color RootColor1 { get => _rootColor1; set => SetProperty(ref _rootColor1, value); }
 
-			_rootColor1 = opt.Color1;
-			_rootColor2 = opt.Color2;
-			_foregroundColor = opt.ForegroundColor;
-			_opacity1 = opt.Opacity1;
-			_opacity2 = opt.Opacity2;
-			_blinkIntervalMs = opt.BlinkIntervalMs;
-			_blinkRepeatCount = opt.BlinkRepeatCount;
+    private Color _rootColor2;
+    public Color RootColor2 { get => _rootColor2; set => SetProperty(ref _rootColor2, value); }
 
-			_titleFontSizeValue = opt.TitleFontSize;
-			_messageFontSizeValue = opt.MessageFontSize;
+    private Color _foregroundColor;
+    public Color ForegroundColor { get => _foregroundColor; set => SetProperty(ref _foregroundColor, value); }
 
-			_useBlink = opt.UseBlink;
-			_fullscreen = opt.Fullscreen;
-			_topMost = opt.TopMost;
-			IsModal = opt.IsModal;
+    private double _opacity1;
+    public double Opacity1 { get => _opacity1; set => SetProperty(ref _opacity1, value); }
 
-			_useContentCard = opt.UseContentCard;
-		}
+    private double _opacity2;
+    public double Opacity2 { get => _opacity2; set => SetProperty(ref _opacity2, value); }
 
-		[RelayCommand(CanExecute = nameof(CanOk))]
-		private void Ok() => CloseRequested?.Invoke(this, true);
+    private int _blinkIntervalMs;
+    public int BlinkIntervalMs { get => _blinkIntervalMs; set => SetProperty(ref _blinkIntervalMs, value); }
 
-		[RelayCommand(CanExecute = nameof(CanCancel))]
-		private void Cancel() => CloseRequested?.Invoke(this, false);
+    private int _blinkRepeatCount;
+    public int BlinkRepeatCount { get => _blinkRepeatCount; set => SetProperty(ref _blinkRepeatCount, value); }
 
-		private bool CanOk() => !string.IsNullOrEmpty(OkText);
-		private bool CanCancel() => !string.IsNullOrEmpty(CancelText);
+    private double _titleFontSizeValue;
+    public double TitleFontSizeValue { get => _titleFontSizeValue; set => SetProperty(ref _titleFontSizeValue, value); }
 
-		partial void OnOkTextChanged(string? value)
-		{
-			OnPropertyChanged(nameof(OkVisible));
-			OkCommand.NotifyCanExecuteChanged();
-		}
+    private double _messageFontSizeValue;
+    public double MessageFontSizeValue { get => _messageFontSizeValue; set => SetProperty(ref _messageFontSizeValue, value); }
 
-		partial void OnCancelTextChanged(string? value)
-		{
-			OnPropertyChanged(nameof(CancelVisible));
-			CancelCommand.NotifyCanExecuteChanged();
-		}
-	}
+    public bool OkVisible     => !string.IsNullOrEmpty(OkText);
+    public bool CancelVisible => !string.IsNullOrEmpty(CancelText);
+
+    public event EventHandler<bool?>? CloseRequested;
+
+    public ICommand OkCommand     { get; }
+    public ICommand CancelCommand { get; }
+
+    public DreamineBlinkPopupWindowViewModel(BlinkPopupOptions opt)
+    {
+        _title              = opt.Title;
+        _message            = opt.Message;
+        _content            = opt.Content;
+        _okText             = opt.OkText;
+        _cancelText         = opt.CancelText;
+        _rootColor1         = opt.Color1;
+        _rootColor2         = opt.Color2;
+        _foregroundColor    = opt.ForegroundColor;
+        _opacity1           = opt.Opacity1;
+        _opacity2           = opt.Opacity2;
+        _blinkIntervalMs    = opt.BlinkIntervalMs;
+        _blinkRepeatCount   = opt.BlinkRepeatCount;
+        _titleFontSizeValue = opt.TitleFontSize;
+        _messageFontSizeValue = opt.MessageFontSize;
+        _useBlink           = opt.UseBlink;
+        _fullscreen         = opt.Fullscreen;
+        _topMost            = opt.TopMost;
+        IsModal             = opt.IsModal;
+        _useContentCard     = opt.UseContentCard;
+
+        OkCommand     = new RelayCommand(() => CloseRequested?.Invoke(this, true),  () => !string.IsNullOrEmpty(OkText));
+        CancelCommand = new RelayCommand(() => CloseRequested?.Invoke(this, false), () => !string.IsNullOrEmpty(CancelText));
+    }
 }

@@ -23,6 +23,7 @@
 		<ProjectReference Include="..\UI.Abstractions\Dreamine.UI.Abstractions.csproj" />
 		<ProjectReference Include="..\UI.Wpf\Dreamine.UI.Wpf.csproj" />
 		<ProjectReference Include="..\UI.Wpf.Controls\Dreamine.UI.Wpf.Controls.csproj" />
+		<ProjectReference Include="..\ViewModels\Dreamine.MVVM.ViewModels.csproj" />
 	</ItemGroup>
 
 </Project>
