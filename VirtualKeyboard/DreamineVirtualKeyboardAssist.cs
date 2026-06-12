@@ -496,6 +496,40 @@ public static class DreamineVirtualKeyboardAssist
         _placementTarget = null;
     }
 
+	/// <summary>
+	/// 앱 종료 시 SharpHook 스레드를 포함한 모든 리소스를 해제합니다.
+	/// Application.OnExit 또는 MainWindow.Closed 에서 호출하세요.
+	/// </summary>
+	/// <summary>
+	/// 앱 종료 시 SharpHook 스레드를 포함한 모든 리소스를 해제합니다.
+	/// Application.OnExit 또는 MainWindow.Closed 에서 호출하세요.
+	/// </summary>
+	public static void Shutdown()
+	{
+		if (_virtualKeyboardWindow is { } win)
+		{
+			try
+			{
+				// 비주얼 트리에서 DreamineVirtualKeyboard를 찾아 Dispose → SharpHook 중지
+				DisposeVkControl(win);
+			}
+			catch { }
+
+			try { if (win.IsLoaded) win.Close(); } catch { }
+		}
+
+		_virtualKeyboardWindow = null!;
+		_placementTarget = null;
+	}
+
+	private static void DisposeVkControl(System.Windows.DependencyObject root)
+	{
+		if (root is DreamineVirtualKeyboard vk) { vk.Dispose(); return; }
+		int count = System.Windows.Media.VisualTreeHelper.GetChildrenCount(root);
+		for (int i = 0; i < count; i++)
+			DisposeVkControl(System.Windows.Media.VisualTreeHelper.GetChild(root, i));
+	}
+
     public static List<IEnterActionProvider> GetEnterActionProviders(DependencyObject d)
     {
         var list = new List<IEnterActionProvider>();
