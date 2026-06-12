@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Windows;
@@ -69,6 +70,12 @@ public partial class DreamineVirtualKeyboardWindow : Window
 
 	private async void DreamineVirtualKeyboardWindow_KeyUp(object sender, System.Windows.Input.KeyEventArgs e)
 	{
+		try { await HandleKeyUpAsync(e); }
+		catch (Exception ex) { Debug.WriteLine($"[VK] KeyUp error: {ex.Message}"); }
+	}
+
+	private async Task HandleKeyUpAsync(System.Windows.Input.KeyEventArgs e)
+	{
 		switch (e.Key)
 		{
 			case System.Windows.Input.Key.Enter:
@@ -83,13 +90,13 @@ public partial class DreamineVirtualKeyboardWindow : Window
 				FocusPlacementTarget();
 				ClearText();
 				await Task.Delay(100);
-				Hide();
+				if (IsVisible) Hide();
 				break;
 			case System.Windows.Input.Key.Escape:
 				FocusPlacementTarget();
 				ClearText();
 				await Task.Delay(100);
-				Hide();
+				if (IsVisible) Hide();
 				break;
 			default:
 				break;

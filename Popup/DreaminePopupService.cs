@@ -157,7 +157,7 @@ namespace Dreamine.UI.Wpf.Equipment.Popup
 
 			var tcs = new TaskCompletionSource<bool?>(TaskCreationOptions.RunContinuationsAsynchronously);
 			Window? win = null;
-			bool ownerDisabled = false;
+			bool wasOwnerEnabled = false;
 
 			await dispatcher.InvokeAsync(() =>
 			{
@@ -194,7 +194,7 @@ namespace Dreamine.UI.Wpf.Equipment.Popup
 					_optionsByWindow.Remove(win);
 
 					// 모달 효과 복원
-					if (options.IsModal && win.Owner != null && ownerDisabled)
+					if (options.IsModal && win.Owner != null && wasOwnerEnabled)
 						win.Owner.IsEnabled = true;
 
 					// Show()로 열린 경우 DialogResult는 항상 null → PopupResult 사용
@@ -206,7 +206,7 @@ namespace Dreamine.UI.Wpf.Equipment.Popup
 				// 모달 효과: Owner 잠시 비활성화
 				if (options.IsModal && win.Owner != null)
 				{
-					ownerDisabled = win.Owner.IsEnabled;
+					wasOwnerEnabled = win.Owner.IsEnabled;
 					win.Owner.IsEnabled = false;
 				}
 

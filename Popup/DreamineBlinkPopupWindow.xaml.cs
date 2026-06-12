@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
@@ -225,15 +226,14 @@ namespace Dreamine.UI.Wpf.Equipment.Popup
 				{
 					Close();
 				}
-				catch
+				catch (Exception ex)
 				{
+					Debug.WriteLine($"[Popup] Close failed, retrying: {ex.Message}");
 					Dispatcher.BeginInvoke(
 						() =>
 						{
-							if (IsLoaded)
-							{
-								Close();
-							}
+							try { if (IsLoaded) Close(); }
+							catch (Exception retryEx) { Debug.WriteLine($"[Popup] Close retry failed: {retryEx.Message}"); }
 						},
 						DispatcherPriority.ContextIdle);
 				}

@@ -45,7 +45,7 @@ public class Key : Button
 
     public void UpdateKey(bool shift, bool capsLock, LanguageCode languageCode, bool imeMode)
     {
-        var keyData = _dicKeyData[KeyCode];
+        if (!_dicKeyData.TryGetValue(KeyCode, out var keyData)) return;
 
         var (displayKey, displayShiftKey) = GetKeyData(imeMode ? languageCode : LanguageCode.en_US);
 

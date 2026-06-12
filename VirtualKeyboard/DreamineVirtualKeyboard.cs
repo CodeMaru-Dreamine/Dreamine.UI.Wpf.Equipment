@@ -29,10 +29,10 @@ public class DreamineVirtualKeyboard : UserControl, IDisposable
 	private TaskPoolGlobalHook _hook = null!;
 
 	/// <summary>RunAsync가 이미 호출되어 실행 중인지 여부</summary>
-	private bool _hookRunning;
+	private volatile bool _hookRunning;
 
 	/// <summary>이벤트 등록 여부(중복 구독 방지)</summary>
-	private bool _hookSubscribed;
+	private volatile bool _hookSubscribed;
 
 	protected Panel? _layoutRoot;
 	protected IEnumerable<Key>? _keys;
@@ -206,8 +206,9 @@ public class DreamineVirtualKeyboard : UserControl, IDisposable
 			{
 				await _hook.RunAsync().ConfigureAwait(false);
 			}
-			catch
+			catch (Exception ex)
 			{
+				Debug.WriteLine($"[VK Hook] RunAsync failed: {ex.Message}");
 			}
 			finally
 			{
@@ -673,7 +674,7 @@ public class DreamineVirtualKeyboard : UserControl, IDisposable
 		}
 
 		if (keyCode is KeyCode.VcLeftShift or KeyCode.VcRightShift or KeyCode.VcCapsLock)
-			Dispatcher.Invoke(UpdateKeys);
+			UpdateKeys();
 
 		RaiseEvent(new RoutedEventArgs(VirtualKeyDownEvent, key.KeyCode));
 	}
@@ -721,7 +722,7 @@ public class DreamineVirtualKeyboard : UserControl, IDisposable
 				_inputModeBtn = null;
 			}
 		}
-		catch { /* swallow on shutdown */ }
+		catch (Exception ex) { Debug.WriteLine($"[VK] Dispose error: {ex.Message}"); }
 		finally
 		{
 			GC.SuppressFinalize(this);

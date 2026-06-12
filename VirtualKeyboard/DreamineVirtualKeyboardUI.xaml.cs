@@ -206,7 +206,7 @@ public partial class DreamineVirtualKeyboardUI : DreamineVirtualKeyboard
 
 	public void UpdateSourceBinding()
 	{
-		VkbTextBox.GetBindingExpression(TextBox.TextProperty).UpdateSource();
+		VkbTextBox.GetBindingExpression(TextBox.TextProperty)?.UpdateSource();
 	}
 
 	private void VkbTextBox_TextChanged(object sender, TextChangedEventArgs e)
