@@ -46,6 +46,9 @@ namespace Dreamine.UI.Wpf.Equipment.Popup
 		/// <summary>\brief 사용자가 요청한 DialogResult(OK=true, Cancel=false, SystemClose=null). </summary>
 		private bool? _requestedResult = null;
 
+		/// <summary>\brief Show()로 열렸을 때 결과를 전달하는 공개 프로퍼티. </summary>
+		public bool? PopupResult => _requestedResult;
+
 		/// <summary>\brief Closing 재진입 방지 플래그. </summary>
 		private bool _inClosing = false;
 
@@ -142,7 +145,10 @@ namespace Dreamine.UI.Wpf.Equipment.Popup
 			try
 			{
 				if (_requestedResult.HasValue)
-					DialogResult = _requestedResult;
+				{
+					try { DialogResult = _requestedResult; }
+					catch (InvalidOperationException) { }
+				}
 
 				base.OnClosing(e);
 			}

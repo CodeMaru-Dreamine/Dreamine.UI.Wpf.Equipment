@@ -197,8 +197,9 @@ namespace Dreamine.UI.Wpf.Equipment.Popup
 					if (options.IsModal && win.Owner != null && ownerDisabled)
 						win.Owner.IsEnabled = true;
 
-					// DialogResult는 Show()에선 null일 수 있음 → null 허용
-					var result = (win as Window)?.DialogResult;
+					// Show()로 열린 경우 DialogResult는 항상 null → PopupResult 사용
+					var result = (win as DreamineBlinkPopupWindow)?.PopupResult
+					             ?? (win as Window)?.DialogResult;
 					_ = tcs.TrySetResult(result);
 				};
 
