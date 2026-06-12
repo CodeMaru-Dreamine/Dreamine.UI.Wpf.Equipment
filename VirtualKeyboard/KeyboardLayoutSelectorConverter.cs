@@ -12,7 +12,7 @@ public class KeyboardLayoutSelectorConverter : IValueConverter
 
     public object? Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        if (value is eVkLayout layout && layout == eVkLayout.Numeric)
+        if (value is VkLayout layout && layout == VkLayout.Numeric)
             return NumPadTemplate;
         return DefaultTemplate;
     }

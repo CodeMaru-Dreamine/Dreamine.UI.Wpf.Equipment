@@ -1,4 +1,4 @@
-﻿using SharpHook.Native;
+using SharpHook.Native;
 using System.Windows;
 using System.Windows.Controls;
 using Dreamine.UI.Abstractions.VirtualKeyboard;
@@ -43,11 +43,11 @@ public class Key : Button
 
     #endregion Public Method
 
-    public void UpdateKey(bool shift, bool capsLock, eLanguageCode languageCode, bool imeMode)
+    public void UpdateKey(bool shift, bool capsLock, LanguageCode languageCode, bool imeMode)
     {
         var keyData = _dicKeyData[KeyCode];
 
-        var (displayKey, displayShiftKey) = GetKeyData(imeMode ? languageCode : eLanguageCode.en_US);
+        var (displayKey, displayShiftKey) = GetKeyData(imeMode ? languageCode : LanguageCode.en_US);
 
         if (KeyCode >= KeyCode.VcA && KeyCode <= KeyCode.VcZ)
         {
@@ -106,23 +106,23 @@ public class Key : Button
 
 
     #region Private Method
-    private (string, string) GetKeyData(eLanguageCode language)
+    private (string, string) GetKeyData(LanguageCode language)
     {
         var keyData = _dicKeyData[KeyCode];
 
         var key = language switch
         {
-            eLanguageCode.en_US => keyData.DefaultKey,
-            eLanguageCode.ko_KR => keyData.KorKey,
-            eLanguageCode.zh_CN => keyData.ChnKey,
+            LanguageCode.en_US => keyData.DefaultKey,
+            LanguageCode.ko_KR => keyData.KorKey,
+            LanguageCode.zh_CN => keyData.ChnKey,
             _ => keyData.DefaultKey
         };
 
         var shiftKey = language switch
         {
-            eLanguageCode.en_US => keyData.ShiftKey,
-            eLanguageCode.ko_KR => keyData.KorShiftKey,
-            eLanguageCode.zh_CN => keyData.ChnShiftKey,
+            LanguageCode.en_US => keyData.ShiftKey,
+            LanguageCode.ko_KR => keyData.KorShiftKey,
+            LanguageCode.zh_CN => keyData.ChnShiftKey,
             _ => keyData.ShiftKey
         };
 

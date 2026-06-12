@@ -1,4 +1,4 @@
-﻿using SharpHook;
+using SharpHook;
 using SharpHook.Native;
 using System;
 using System.ComponentModel;
@@ -19,7 +19,7 @@ public class DreamineVirtualKeyboard : UserControl, IDisposable
 {
 	#region Event Handler
 
-	public EventHandler<eLanguageCode>? OnKeyboardLanguageChanged { get; set; }
+	public EventHandler<LanguageCode>? OnKeyboardLanguageChanged { get; set; }
 
 	#endregion
 
@@ -69,11 +69,11 @@ public class DreamineVirtualKeyboard : UserControl, IDisposable
 	#region Layout
 
 	public static readonly DependencyProperty LayoutProperty =
-		DependencyProperty.Register("Layout", typeof(eVkLayout), typeof(DreamineVirtualKeyboard), new PropertyMetadata(eVkLayout.Text, OnLayoutChanged));
+		DependencyProperty.Register("Layout", typeof(VkLayout), typeof(DreamineVirtualKeyboard), new PropertyMetadata(VkLayout.Text, OnLayoutChanged));
 
-	public eVkLayout Layout
+	public VkLayout Layout
 	{
-		get { return (eVkLayout)GetValue(LayoutProperty); }
+		get { return (VkLayout)GetValue(LayoutProperty); }
 		set { SetValue(LayoutProperty, value); }
 	}
 
@@ -81,12 +81,12 @@ public class DreamineVirtualKeyboard : UserControl, IDisposable
 	{
 		if (d is DreamineVirtualKeyboard vk)
 		{
-			var layout = (eVkLayout)e.NewValue;
+			var layout = (VkLayout)e.NewValue;
 			vk._keys = null;
 			vk._langBtn = null;
 			vk._inputModeBtn = null;
 
-			vk.IsPasswordLayout = layout == eVkLayout.Password;
+			vk.IsPasswordLayout = layout == VkLayout.Password;
 
 			vk.Dispatcher.BeginInvoke(() =>
 			{
@@ -126,7 +126,7 @@ public class DreamineVirtualKeyboard : UserControl, IDisposable
 
 	#region Property
 
-	public eLanguageCode CurrentLang { get; private set; }
+	public LanguageCode CurrentLang { get; private set; }
 	public bool IsPressedShift { get; private set; }
 	public bool IsPressedCapsLock { get; private set; }
 	public bool IsPressedCtrl { get; set; }
@@ -251,7 +251,7 @@ public class DreamineVirtualKeyboard : UserControl, IDisposable
 		{
 			foreach (var keyButton in _keys)
 			{
-				var useShift = Layout == eVkLayout.Text || Layout == eVkLayout.Password;
+				var useShift = Layout == VkLayout.Text || Layout == VkLayout.Password;
 				keyButton.UpdateKey(useShift ? IsPressedShift : false, IsPressedCapsLock, CurrentLang, ImeMode);
 			}
 		}
@@ -262,7 +262,7 @@ public class DreamineVirtualKeyboard : UserControl, IDisposable
 		if (_layoutRoot == null)
 			_layoutRoot = FindName("KeyboardLayoutRoot") as Panel;
 
-		if (Layout == eVkLayout.Password)
+		if (Layout == VkLayout.Password)
 		{
 			if (_layoutRoot?.FindFirstVisualChild<PasswordBox>("VkbPasswordBox") is { } pb && !pb.IsKeyboardFocusWithin)
 			{
@@ -305,10 +305,10 @@ public class DreamineVirtualKeyboard : UserControl, IDisposable
 		{
 			switch (CurrentLang)
 			{
-				case eLanguageCode.ko_KR:
+				case LanguageCode.ko_KR:
 					_inputModeBtn.Content = ImeMode ? "가" : "abc";
 					break;
-				case eLanguageCode.zh_CN:
+				case LanguageCode.zh_CN:
 					_inputModeBtn.Content = ImeMode ? "中" : "英";
 					break;
 				default:
@@ -368,10 +368,10 @@ public class DreamineVirtualKeyboard : UserControl, IDisposable
 
 		CurrentLang = lang switch
 		{
-			"ko-KR" => eLanguageCode.ko_KR,
-			"vi-VN" => eLanguageCode.vi_VN,
-			"zh-CN" => eLanguageCode.zh_CN,
-			_ => eLanguageCode.en_US
+			"ko-KR" => LanguageCode.ko_KR,
+			"vi-VN" => LanguageCode.vi_VN,
+			"zh-CN" => LanguageCode.zh_CN,
+			_ => LanguageCode.en_US
 		};
 
 		OnKeyboardLanguageChanged?.Invoke(this, CurrentLang);
@@ -486,7 +486,7 @@ public class DreamineVirtualKeyboard : UserControl, IDisposable
 			{
 				case KeyCode.VcLeftShift:
 				case KeyCode.VcRightShift:
-					if (Layout == eVkLayout.Text || Layout == eVkLayout.Password)
+					if (Layout == VkLayout.Text || Layout == VkLayout.Password)
 						IsPressedShift = true;
 					if (_keys?.FirstOrDefault(k => k.KeyCode == KeyCode.VcLeftShift) is { } shiftKey)
 						shiftKey.IsPressed = true;
@@ -500,7 +500,7 @@ public class DreamineVirtualKeyboard : UserControl, IDisposable
 					break;
 				case KeyCode.VcLeftControl:
 				case KeyCode.VcRightControl:
-					if (Layout == eVkLayout.Text || Layout == eVkLayout.Password)
+					if (Layout == VkLayout.Text || Layout == VkLayout.Password)
 						IsPressedCtrl = true;
 					if (_keys?.FirstOrDefault(k => k.KeyCode == KeyCode.VcLeftControl) is { } ctrlKey)
 						ctrlKey.IsPressed = true;
@@ -556,7 +556,7 @@ public class DreamineVirtualKeyboard : UserControl, IDisposable
 
 	private void KeyClick(object sender, RoutedEventArgs e)
 	{
-		if (Layout != eVkLayout.Text && Layout != eVkLayout.Password)
+		if (Layout != VkLayout.Text && Layout != VkLayout.Password)
 		{
 			_eventSimulator.SimulateKeyRelease(KeyCode.VcLeftShift);
 			_eventSimulator.SimulateKeyRelease(KeyCode.VcRightShift);
@@ -589,11 +589,11 @@ public class DreamineVirtualKeyboard : UserControl, IDisposable
 
 			switch (CurrentLang)
 			{
-				case eLanguageCode.ko_KR:
+				case LanguageCode.ko_KR:
 					_eventSimulator.SimulateKeyPress(KeyCode.VcHangul);
 					_eventSimulator.SimulateKeyRelease(KeyCode.VcHangul);
 					break;
-				case eLanguageCode.zh_CN:
+				case LanguageCode.zh_CN:
 					_eventSimulator.SimulateKeyPress(KeyCode.VcLeftShift);
 					_eventSimulator.SimulateKeyRelease(KeyCode.VcLeftShift);
 					break;

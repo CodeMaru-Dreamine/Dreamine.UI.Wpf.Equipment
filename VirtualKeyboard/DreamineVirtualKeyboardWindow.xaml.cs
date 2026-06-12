@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Windows;
@@ -176,7 +176,7 @@ public partial class DreamineVirtualKeyboardWindow : Window
 	}
 
 
-	public void SetLayout(eVkLayout layout)
+	public void SetLayout(VkLayout layout)
 	{
 		VirtualKeyboardComp.Layout = layout;
 
@@ -187,14 +187,14 @@ public partial class DreamineVirtualKeyboardWindow : Window
 		UpdateVisibilityState();
 	}
 
-	private void SetDisplayKeyboardSize(eVkLayout layout)
+	private void SetDisplayKeyboardSize(VkLayout layout)
 	{
-		MaxWidth = layout == eVkLayout.Text || layout == eVkLayout.Password ? 948 : 548;
+		MaxWidth = layout == VkLayout.Text || layout == VkLayout.Password ? 948 : 548;
 	}
 
-	private void SetDefaultMinMaxValue(eVkLayout layout)
+	private void SetDefaultMinMaxValue(VkLayout layout)
 	{
-		if (layout == eVkLayout.Decimal)
+		if (layout == VkLayout.Decimal)
 		{
 			VirtualKeyboardComp.Minimum = decimal.MinValue;
 			VirtualKeyboardComp.Maximum = decimal.MaxValue;

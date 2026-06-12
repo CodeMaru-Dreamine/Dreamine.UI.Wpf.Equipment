@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
@@ -77,7 +77,7 @@ public partial class DreamineVirtualKeyboardUI : DreamineVirtualKeyboard
 		FocusVkbTextBox();
 		FocusVkbPasswordBox();
 		InternalUpdate = true;
-		if (Layout != eVkLayout.Text && (string.IsNullOrEmpty(VkbTextBox.Text) || IsOuterRange()))
+		if (Layout != VkLayout.Text && (string.IsNullOrEmpty(VkbTextBox.Text) || IsOuterRange()))
 		{
 			ClampNumericValue(true);
 		}
@@ -95,7 +95,7 @@ public partial class DreamineVirtualKeyboardUI : DreamineVirtualKeyboard
 		FocusVkbTextBox();
 		FocusVkbPasswordBox();
 
-		if (Layout != eVkLayout.Text && (string.IsNullOrEmpty(VkbTextBox.Text) || IsOuterRange()))
+		if (Layout != VkLayout.Text && (string.IsNullOrEmpty(VkbTextBox.Text) || IsOuterRange()))
 		{
 			ClampNumericValue(true);
 		}
@@ -136,7 +136,7 @@ public partial class DreamineVirtualKeyboardUI : DreamineVirtualKeyboard
 		}
 	}
 
-	private void OnKeyboardLanguageChangedHandler(object? sender, eLanguageCode e)
+	private void OnKeyboardLanguageChangedHandler(object? sender, LanguageCode e)
 	{
 		SetInputMethod();
 	}
@@ -145,18 +145,18 @@ public partial class DreamineVirtualKeyboardUI : DreamineVirtualKeyboard
 	{
 		switch (CurrentLang)
 		{
-			case eLanguageCode.en_US:
+			case LanguageCode.en_US:
 				InputMethod.SetIsInputMethodEnabled(VkbTextBox, false);
 				InputMethod.SetIsInputMethodSuspended(VkbTextBox, true);
 				break;
-			case eLanguageCode.vi_VN:
+			case LanguageCode.vi_VN:
 				InputMethod.SetIsInputMethodEnabled(VkbTextBox, false);
 				InputMethod.SetIsInputMethodSuspended(VkbTextBox, true);
 				InputMethod.SetPreferredImeState(VkbTextBox, InputMethodState.On);
 				InputMethod.SetPreferredImeConversionMode(VkbTextBox, ImeConversionModeValues.Alphanumeric);
 				break;
-			case eLanguageCode.ko_KR:
-			case eLanguageCode.zh_CN:
+			case LanguageCode.ko_KR:
+			case LanguageCode.zh_CN:
 				InputMethod.SetIsInputMethodEnabled(VkbTextBox, true);
 				InputMethod.SetIsInputMethodSuspended(VkbTextBox, false);
 				InputMethod.SetPreferredImeState(VkbTextBox, InputMethodState.On);
@@ -167,13 +167,13 @@ public partial class DreamineVirtualKeyboardUI : DreamineVirtualKeyboard
 
 	public void UpdateNumericLabelVisibility()
 	{
-		var showMinMax = Layout != eVkLayout.Text && (Minimum != decimal.MinValue || Maximum != decimal.MaxValue);
-		if (Layout == eVkLayout.Numeric)
+		var showMinMax = Layout != VkLayout.Text && (Minimum != decimal.MinValue || Maximum != decimal.MaxValue);
+		if (Layout == VkLayout.Numeric)
 		{
 			MinTbl.Visibility = showMinMax && Minimum != int.MinValue ? Visibility.Visible : Visibility.Collapsed;
 			MaxTbl.Visibility = showMinMax && Maximum != int.MaxValue ? Visibility.Visible : Visibility.Collapsed;
 		}
-		else if (Layout == eVkLayout.Decimal)
+		else if (Layout == VkLayout.Decimal)
 		{
 			MinTbl.Visibility = showMinMax && Minimum != decimal.MinValue ? Visibility.Visible : Visibility.Collapsed;
 			MaxTbl.Visibility = showMinMax && Maximum != decimal.MaxValue ? Visibility.Visible : Visibility.Collapsed;
@@ -196,7 +196,7 @@ public partial class DreamineVirtualKeyboardUI : DreamineVirtualKeyboard
 	{
 		RemoveNumericHandler();
 
-		if (Layout != eVkLayout.Text)
+		if (Layout != VkLayout.Text)
 		{
 			VkbTextBox.PreviewTextInput += VkbTextBox_PreviewTextInput;
 			VkbTextBox.TextChanged += VkbTextBox_TextChanged;
@@ -227,7 +227,7 @@ public partial class DreamineVirtualKeyboardUI : DreamineVirtualKeyboard
 	private void NormalizeNumericInput(object? sender, EventArgs eventArgs)
 	{
 		var txt = VkbTextBox.Text;
-		if (Layout == eVkLayout.Numeric)
+		if (Layout == VkLayout.Numeric)
 		{
 			if (decimal.TryParse(txt, NumberStyles.Integer, CultureInfo.InvariantCulture, out decimal intval))
 			{
@@ -239,7 +239,7 @@ public partial class DreamineVirtualKeyboardUI : DreamineVirtualKeyboard
 				});
 			}
 		}
-		else if (Layout == eVkLayout.Decimal)
+		else if (Layout == VkLayout.Decimal)
 		{
 			if (decimal.TryParse(txt, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal decval))
 			{
@@ -268,7 +268,7 @@ public partial class DreamineVirtualKeyboardUI : DreamineVirtualKeyboard
 
 	private void VkbTextBox_PreviewTextInput(object sender, TextCompositionEventArgs e)
 	{
-		if (Layout == eVkLayout.Decimal)
+		if (Layout == VkLayout.Decimal)
 		{
 			var sep = CultureInfo.InvariantCulture.NumberFormat.NumberDecimalSeparator;
 
@@ -302,7 +302,7 @@ public partial class DreamineVirtualKeyboardUI : DreamineVirtualKeyboard
 
 	private bool IsValidNumericInput(string input)
 	{
-		if (Layout == eVkLayout.Numeric)
+		if (Layout == VkLayout.Numeric)
 			return Regex.IsMatch(input, @"^-?[0-9]*$");
 		else
 		{
@@ -314,7 +314,7 @@ public partial class DreamineVirtualKeyboardUI : DreamineVirtualKeyboard
 
 	public void ClampNumericValue(bool updateSourceBinding = false)
 	{
-		if (Layout == eVkLayout.Numeric)
+		if (Layout == VkLayout.Numeric)
 		{
 			decimal.TryParse(VkbTextBox.Text, NumberStyles.Integer, CultureInfo.InvariantCulture, out decimal intval);
 			var clamped = Math.Clamp(intval, Minimum, Maximum);
@@ -324,7 +324,7 @@ public partial class DreamineVirtualKeyboardUI : DreamineVirtualKeyboard
 				VkbTextBox.CaretIndex = VkbTextBox.Text.Length;
 			});
 		}
-		else if (Layout == eVkLayout.Decimal)
+		else if (Layout == VkLayout.Decimal)
 		{
 			decimal.TryParse(VkbTextBox.Text, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal decval);
 			decimal clamped = Math.Clamp(decval, Minimum, Maximum);
@@ -345,7 +345,7 @@ public partial class DreamineVirtualKeyboardUI : DreamineVirtualKeyboard
 
 	public bool IsOuterRange()
 	{
-		if (Layout == eVkLayout.Numeric)
+		if (Layout == VkLayout.Numeric)
 		{
 			var isSuccess = decimal.TryParse(VkbTextBox.Text, NumberStyles.Integer, CultureInfo.InvariantCulture, out decimal intval);
 			if (!isSuccess || intval < Minimum || intval > Maximum)
@@ -353,7 +353,7 @@ public partial class DreamineVirtualKeyboardUI : DreamineVirtualKeyboard
 				return true;
 			}
 		}
-		else if (Layout == eVkLayout.Decimal)
+		else if (Layout == VkLayout.Decimal)
 		{
 			var isSuccess = decimal.TryParse(VkbTextBox.Text, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal decval);
 			if (!isSuccess || decval < Minimum || decval > Maximum)

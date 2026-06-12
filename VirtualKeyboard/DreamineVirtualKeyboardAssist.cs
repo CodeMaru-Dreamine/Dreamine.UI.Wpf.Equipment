@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Documents;
@@ -26,8 +26,8 @@ public static class DreamineVirtualKeyboardAssist
 
     #region Func/Action
 
-    public static Func<DependencyObject, eVkLayout>? GetKeyboardLayoutAction { get; set; } = null;
-    public static Action<DependencyObject, eVkLayout, DreamineVirtualKeyboardWindow>? SetBindingAction { get; set; } = null;
+    public static Func<DependencyObject, VkLayout>? GetKeyboardLayoutAction { get; set; } = null;
+    public static Action<DependencyObject, VkLayout, DreamineVirtualKeyboardWindow>? SetBindingAction { get; set; } = null;
 
     #endregion
 
@@ -38,14 +38,14 @@ public static class DreamineVirtualKeyboardAssist
     public static readonly DependencyProperty LayoutProperty =
         DependencyProperty.RegisterAttached(
             "Layout",
-            typeof(eVkLayout),
+            typeof(VkLayout),
             typeof(DreamineVirtualKeyboardAssist),
-            new PropertyMetadata(default(eVkLayout)));
+            new PropertyMetadata(default(VkLayout)));
 
-    public static eVkLayout GetLayout(DependencyObject obj) =>
-        (eVkLayout)obj.GetValue(LayoutProperty);
+    public static VkLayout GetLayout(DependencyObject obj) =>
+        (VkLayout)obj.GetValue(LayoutProperty);
 
-    public static void SetLayout(DependencyObject obj, eVkLayout value) =>
+    public static void SetLayout(DependencyObject obj, VkLayout value) =>
         obj.SetValue(LayoutProperty, value);
 
     #endregion
@@ -372,9 +372,9 @@ public static class DreamineVirtualKeyboardAssist
         }
     }
     	
-	public static void SetBinding(DependencyObject placementTarget, eVkLayout layout, DreamineVirtualKeyboardWindow virtualKeyboardWindow)
+	public static void SetBinding(DependencyObject placementTarget, VkLayout layout, DreamineVirtualKeyboardWindow virtualKeyboardWindow)
 	{
-		if (layout == eVkLayout.Password)
+		if (layout == VkLayout.Password)
 		{
 			if (TryBindPasswordProperty(placementTarget, out var pwdBinding))
 			{
@@ -406,11 +406,11 @@ public static class DreamineVirtualKeyboardAssist
 
 			switch (layout)
 			{
-				case eVkLayout.Numeric:
+				case VkLayout.Numeric:
 					virtualKeyboardWindow.SetBinding(binding, Math.Max(int.MinValue, (int)min), Math.Min(int.MaxValue, (int)max));
 					return;
 
-				case eVkLayout.Decimal:
+				case VkLayout.Decimal:
 					var decimalFormat = GetDecimalFormat(placementTarget);
 					virtualKeyboardWindow.SetBinding(binding, min, max, decimalFormat);
 					return;

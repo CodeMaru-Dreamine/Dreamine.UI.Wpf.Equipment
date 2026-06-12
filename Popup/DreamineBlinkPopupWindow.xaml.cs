@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Input;
@@ -10,8 +10,8 @@ using Dreamine.UI.Abstractions.Popup;
 using Dreamine.UI.Wpf.Controls.MessageBox;
 namespace Dreamine.UI.Wpf.Equipment.Popup
 {
-	/// <summary>\enum ePopupAction \brief 팝업 닫힘 유발 동작 구분.</summary>
-	internal enum ePopupAction
+	/// <summary>\enum PopupAction \brief 팝업 닫힘 유발 동작 구분.</summary>
+	internal enum PopupAction
 	{
 		/// <summary>\brief 아무 동작 없음. </summary>
 		None,
@@ -50,7 +50,7 @@ namespace Dreamine.UI.Wpf.Equipment.Popup
 		private bool _inClosing = false;
 
 		/// <summary>\brief 마지막으로 어떤 동작으로 닫기를 시도했는지 기록. </summary>
-		private ePopupAction _lastAction = ePopupAction.None;
+		private PopupAction _lastAction = PopupAction.None;
 
 		/// <summary>\brief Win32 메시지 후킹을 위한 HwndSource. </summary>
 		private HwndSource? _hwndSrc;
@@ -73,10 +73,10 @@ namespace Dreamine.UI.Wpf.Equipment.Popup
 			{
 				_requestedResult = dr;
 				_lastAction = dr == true
-					? ePopupAction.Ok
+					? PopupAction.Ok
 					: dr == false
-						? ePopupAction.Cancel
-						: ePopupAction.SystemClose;
+						? PopupAction.Cancel
+						: PopupAction.SystemClose;
 
 				RequestCloseNextTick();
 			};
@@ -129,8 +129,8 @@ namespace Dreamine.UI.Wpf.Equipment.Popup
 		/// </details>
 		protected override void OnClosing(CancelEventArgs e)
 		{
-			if (_lastAction == ePopupAction.None)
-				_lastAction = ePopupAction.SystemClose;
+			if (_lastAction == PopupAction.None)
+				_lastAction = PopupAction.SystemClose;
 
 			if (_inClosing)
 			{
