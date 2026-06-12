@@ -1,14 +1,13 @@
 ﻿using System.ComponentModel;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
-using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media;
 using Dreamine.UI.Wpf.Equipment.DreamineVirtualKeyboard;
-using Dreamine.UI.Abstractions.DreamineVirtualKeyboard;
-using Dreamine.UI.Wpf.Equipment.DreamineVirtualKeyboard;
+using Dreamine.UI.Abstractions.VirtualKeyboard;
 
 namespace Dreamine.UI.Wpf.Equipment.DreamineVirtualKeyboard;
 
@@ -72,7 +71,7 @@ public partial class DreamineVirtualKeyboardWindow : Window
 	{
 		switch (e.Key)
 		{
-			case Key.Enter:
+			case System.Windows.Input.Key.Enter:
 				UpdateSourceBinding();
 
 				var result = await InvokeProvdersAsync();
@@ -86,7 +85,7 @@ public partial class DreamineVirtualKeyboardWindow : Window
 				await Task.Delay(100);
 				Hide();
 				break;
-			case Key.Escape:
+			case System.Windows.Input.Key.Escape:
 				FocusPlacementTarget();
 				ClearText();
 				await Task.Delay(100);
@@ -141,16 +140,17 @@ public partial class DreamineVirtualKeyboardWindow : Window
 
 		Point ptDev = ui.PointToScreen(new Point(0, 0));
 
-		var screen = Screen.FromPoint(new System.Drawing.Point((int)ptDev.X, (int)ptDev.Y));
-
 		var ps = PresentationSource.FromVisual(ui);
 		Matrix fromDevice = ps?.CompositionTarget?.TransformFromDevice ?? Matrix.Identity;
 
 		Point ptDip = fromDevice.Transform(ptDev);
 
-		var waDev = screen.WorkingArea; // px
-		Point waTopLeftDip = fromDevice.Transform(new Point(waDev.Left, waDev.Top));
-		Point waBottomRightDip = fromDevice.Transform(new Point(waDev.Right, waDev.Bottom));
+		var hMonitor = NativeMethods.MonitorFromPoint(new NativeMethods.POINT { x = (int)ptDev.X, y = (int)ptDev.Y }, NativeMethods.MONITOR_DEFAULTTONEAREST);
+		var mi = new NativeMethods.MONITORINFO { cbSize = (uint)Marshal.SizeOf<NativeMethods.MONITORINFO>() };
+		NativeMethods.GetMonitorInfo(hMonitor, ref mi);
+		var waR = mi.rcWork;
+		Point waTopLeftDip = fromDevice.Transform(new Point(waR.left, waR.top));
+		Point waBottomRightDip = fromDevice.Transform(new Point(waR.right, waR.bottom));
 		var waDip = new Rect(waTopLeftDip, waBottomRightDip);
 
 		double windowHeight = ActualHeight;
@@ -395,5 +395,32 @@ public partial class DreamineVirtualKeyboardWindow : Window
 		{
 			passwordBox.Focus();
 		}
+	}
+
+	private static class NativeMethods
+	{
+		public const uint MONITOR_DEFAULTTONEAREST = 0x00000002;
+
+		[StructLayout(LayoutKind.Sequential)]
+		public struct POINT { public int x; public int y; }
+
+		[StructLayout(LayoutKind.Sequential)]
+		public struct RECT { public int left; public int top; public int right; public int bottom; }
+
+		[StructLayout(LayoutKind.Sequential)]
+		public struct MONITORINFO
+		{
+			public uint cbSize;
+			public RECT rcMonitor;
+			public RECT rcWork;
+			public uint dwFlags;
+		}
+
+		[DllImport("user32.dll")]
+		public static extern IntPtr MonitorFromPoint(POINT pt, uint dwFlags);
+
+		[DllImport("user32.dll")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		public static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFO lpmi);
 	}
 }

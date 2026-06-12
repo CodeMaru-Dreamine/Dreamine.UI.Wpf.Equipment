@@ -1,5 +1,5 @@
 ﻿using SharpHook;
-using SharpHook.Data;
+using SharpHook.Native;
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -11,9 +11,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
-using Dreamine.UI.Wpf.Equipment.DreamineVirtualKeyboard;
-using Dreamine.UI.Abstractions.DreamineVirtualKeyboard;
-using Dreamine.UI.Wpf.Equipment.DreamineVirtualKeyboard;
+using Dreamine.UI.Abstractions.VirtualKeyboard;
 
 namespace Dreamine.UI.Wpf.Equipment.DreamineVirtualKeyboard;
 
@@ -226,7 +224,7 @@ public class DreamineVirtualKeyboard : UserControl, IDisposable
 		// 실행 중이면 중지
 		if (_hookRunning)
 		{
-			_hook.Stop();
+			_hook.Dispose();
 			_hookRunning = false;
 		}
 
@@ -699,7 +697,7 @@ public class DreamineVirtualKeyboard : UserControl, IDisposable
 			// 공통: 눌린 키/반복/훅 정리
 			ReleasePressedKeys();
 			ReleaseBackspaceRepeat();
-			UnregisterHookEvents();      // _hook.Stop() 포함
+			UnregisterHookEvents();      // _hook.Dispose() 포함
 
 			if (disposing)
 			{

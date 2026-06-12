@@ -5,7 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
 using Dreamine.UI.Wpf.Controls;
-using Dreamine.UI.Abstractions.DreamineVirtualKeyboard;
+using Dreamine.UI.Abstractions.VirtualKeyboard;
 using Dreamine.UI.Wpf.Equipment.DreamineVirtualKeyboard;
 
 namespace Dreamine.UI.Wpf.Equipment.DreamineVirtualKeyboard;

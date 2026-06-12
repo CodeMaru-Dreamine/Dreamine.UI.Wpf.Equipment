@@ -1,6 +1,6 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
-using Dreamine.UI.Abstractions.DreamineVirtualKeyboard;
+using Dreamine.UI.Abstractions.VirtualKeyboard;
 
 namespace Dreamine.UI.Wpf.Equipment.DreamineVirtualKeyboard;
 

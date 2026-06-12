@@ -6,6 +6,7 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
+using Dreamine.UI.Abstractions.Popup;
 using Dreamine.UI.Wpf.Controls.MessageBox;
 namespace Dreamine.UI.Wpf.Equipment.Popup
 {
@@ -44,15 +45,6 @@ namespace Dreamine.UI.Wpf.Equipment.Popup
 
 		/// <summary>\brief 사용자가 요청한 DialogResult(OK=true, Cancel=false, SystemClose=null). </summary>
 		private bool? _requestedResult = null;
-
-		/// <summary>\brief 인증을 이미 통과했는지 여부. </summary>
-		private bool _authChecked = false;
-
-		/// <summary>\brief 로그인창 중복 표시 방지 플래그. </summary>
-		private bool _loginShow = false;
-
-		/// <summary>\brief 인증으로 인해 다음 틱에서 닫기 예정인지 여부. </summary>
-		private bool _closingByAuth = false;
 
 		/// <summary>\brief Closing 재진입 방지 플래그. </summary>
 		private bool _inClosing = false;
@@ -138,9 +130,7 @@ namespace Dreamine.UI.Wpf.Equipment.Popup
 		protected override void OnClosing(CancelEventArgs e)
 		{
 			if (_lastAction == ePopupAction.None)
-			{
 				_lastAction = ePopupAction.SystemClose;
-			}
 
 			if (_inClosing)
 			{
@@ -151,75 +141,15 @@ namespace Dreamine.UI.Wpf.Equipment.Popup
 
 			try
 			{
-				bool needAuth =
-					_opt.LoginViewModel != null &&
-					((_lastAction == ePopupAction.Ok && _opt.RequireAuthOnOk) ||
-					 (_lastAction == ePopupAction.Cancel && _opt.RequireAuthOnCancel));
+				if (_requestedResult.HasValue)
+					DialogResult = _requestedResult;
 
-				if (!needAuth || _authChecked || _closingByAuth)
-				{
-					if (_requestedResult.HasValue)
-					{
-						DialogResult = _requestedResult;
-					}
-
-					base.OnClosing(e);
-					return;
-				}
-
-				e.Cancel = true;
-
-				if (_loginShow)
-				{
-					return;
-				}
-
-				_loginShow = true;
-
-				Dispatcher.BeginInvoke(new Action(() =>
-				{
-					try
-					{
-						var loginVm = _opt.LoginViewModel!;
-						void Handler(UserItem? u)
-						{
-							loginVm.LoginChanged -= Handler;
-							OnLoginCompleted(u);
-						}
-
-						loginVm.LoginChanged += Handler;
-						loginVm.ShowLoginDialog();
-					}
-					finally
-					{
-						_loginShow = false;
-					}
-				}), DispatcherPriority.ContextIdle);
+				base.OnClosing(e);
 			}
 			finally
 			{
 				_inClosing = false;
 			}
-		}
-
-		/// <summary>\brief 로그인/권한 인증 완료 콜백.</summary>
-		private void OnLoginCompleted(UserItem? user)
-		{
-			if (user == null || user.Grade < 2)
-			{
-				VsMessageBox.Show(
-					"권한이 부족합니다. Engineer 이상만 가능합니다.",
-					"Access Denied",
-					MessageBoxButton.OK,
-					MessageBoxImage.Warning);
-
-				return;
-			}
-
-			_authChecked = true;
-			_closingByAuth = true;
-
-			RequestCloseNextTick();
 		}
 
 		/// <summary>\brief Win32 메시지 훅 등록.</summary>

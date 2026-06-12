@@ -2,11 +2,12 @@
 using System.Linq;
 using System.Windows;
 using System.Windows.Threading;
+using Dreamine.UI.Abstractions.Popup;
 
 namespace Dreamine.UI.Wpf.Equipment.Popup
 {
 	/// <summary>\brief 깜빡임 팝업 서비스 구현.</summary>
-	public sealed class DreaminePopupService : IDreaminePopupService
+	public sealed class DreaminePopupService : IPopupService
 	{
 		private readonly List<Window> _opened = new();
 		private readonly Dictionary<Window, BlinkPopupOptions> _optionsByWindow = new();

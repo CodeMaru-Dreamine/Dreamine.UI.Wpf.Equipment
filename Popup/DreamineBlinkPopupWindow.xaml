@@ -2,9 +2,9 @@
     x:Class="Dreamine.UI.Wpf.Equipment.Popup.DreamineBlinkPopupWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:converters="clr-namespace:VsLibrary.UiComponent.Converters"
+    xmlns:converters="clr-namespace:Dreamine.UI.Wpf.Converters;assembly=Dreamine.UI.Wpf"
     xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
-    xmlns:vsmvvm="clr-namespace:VsLibrary.Common.MVVM.Behaviors"
+    xmlns:b="clr-namespace:Dreamine.UI.Wpf.Behaviors;assembly=Dreamine.UI.Wpf"
     Title="Blink Popup"
     AllowsTransparency="True"
     Background="Transparent"
@@ -40,7 +40,7 @@
         <!--  상단 바(드래그 가능)  -->
         <Grid Grid.Row="0" Background="#2C3E50">
             <i:Interaction.Behaviors>
-                <vsmvvm:WindowDragBehavior IsDragEnabled="True" />
+                <b:WindowDragBehavior IsDragEnabled="True" />
             </i:Interaction.Behaviors>
 
             <Grid.ColumnDefinitions>
