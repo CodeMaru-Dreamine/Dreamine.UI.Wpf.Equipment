@@ -9,6 +9,7 @@ namespace Dreamine.UI.Wpf.Equipment.Popup
 	/// <summary>\brief 깜빡임 팝업 서비스 구현.</summary>
 	public sealed class DreaminePopupService : IPopupService
 	{
+		// UI 스레드 전용 — 모든 Add/Remove는 Dispatcher.InvokeAsync 또는 WPF 이벤트 핸들러에서만 수행
 		private readonly List<Window> _opened = new();
 		private readonly Dictionary<Window, BlinkPopupOptions> _optionsByWindow = new();
 
