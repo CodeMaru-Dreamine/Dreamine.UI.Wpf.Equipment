@@ -45,7 +45,13 @@ public static class Win32Api
     public static extern bool ImmGetOpenStatus(IntPtr hIMC);
 
     [DllImport("imm32.dll")]
+    public static extern bool ImmSetOpenStatus(IntPtr hIMC, bool fOpen);
+
+    [DllImport("imm32.dll")]
     public static extern bool ImmGetConversionStatus(IntPtr hIMC, out uint pdwConversion, out uint pdwSentence);
+
+    [DllImport("imm32.dll")]
+    public static extern bool ImmSetConversionStatus(IntPtr hIMC, uint fdwConversion, uint fdwSentence);
 
     [DllImport("user32.dll", CharSet = CharSet.Auto, ExactSpelling = true)]
     public static extern short GetKeyState(int keyCode);

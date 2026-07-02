@@ -47,6 +47,14 @@ public class Key : Button
     {
         if (!_dicKeyData.TryGetValue(KeyCode, out var keyData)) return;
 
+        Content = GetDisplayText(shift, capsLock, languageCode, imeMode);
+    }
+
+    public string GetDisplayText(bool shift, bool capsLock, LanguageCode languageCode, bool imeMode)
+    {
+        if (!_dicKeyData.TryGetValue(KeyCode, out var keyData))
+            return string.Empty;
+
         var (displayKey, displayShiftKey) = GetKeyData(imeMode ? languageCode : LanguageCode.en_US);
 
         if (KeyCode >= KeyCode.VcA && KeyCode <= KeyCode.VcZ)
@@ -83,7 +91,7 @@ public class Key : Button
             displayKey = keyData.ShiftKey;
         }
 
-        Content = displayKey;
+        return displayKey;
     }
 
     #endregion
@@ -173,7 +181,7 @@ public class Key : Button
             { KeyCode.VcV, new(defaultKey: "v", korKey: "ㅍ", chnKey: "女") },
             { KeyCode.VcW, new(defaultKey: "w", korKey: "ㅈ", korShiftKey: "ㅉ", chnKey: "田") },
             { KeyCode.VcX, new(defaultKey: "x", korKey: "ㅌ", chnKey: "難") },
-            { KeyCode.VcY, new(defaultKey: "Y", korKey: "ㅛ", chnKey: "卜") },
+            { KeyCode.VcY, new(defaultKey: "y", korKey: "ㅛ", chnKey: "卜") },
             { KeyCode.VcZ, new(defaultKey: "z", korKey: "ㅋ", chnKey: "重") },
 
             { KeyCode.VcBackQuote, new(defaultKey: "`", shiftKey: "~") },

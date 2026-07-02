@@ -152,15 +152,11 @@ public partial class DreamineVirtualKeyboardUI : DreamineVirtualKeyboard
 			case LanguageCode.vi_VN:
 				InputMethod.SetIsInputMethodEnabled(VkbTextBox, false);
 				InputMethod.SetIsInputMethodSuspended(VkbTextBox, true);
-				InputMethod.SetPreferredImeState(VkbTextBox, InputMethodState.On);
-				InputMethod.SetPreferredImeConversionMode(VkbTextBox, ImeConversionModeValues.Alphanumeric);
 				break;
 			case LanguageCode.ko_KR:
 			case LanguageCode.zh_CN:
 				InputMethod.SetIsInputMethodEnabled(VkbTextBox, true);
 				InputMethod.SetIsInputMethodSuspended(VkbTextBox, false);
-				InputMethod.SetPreferredImeState(VkbTextBox, InputMethodState.On);
-				InputMethod.SetPreferredImeConversionMode(VkbTextBox, ImeConversionModeValues.Native);
 				break;
 		}
 	}

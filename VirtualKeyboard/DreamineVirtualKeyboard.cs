@@ -26,6 +26,8 @@ public class DreamineVirtualKeyboard : UserControl, IDisposable
 	#region Variable
 
 	private readonly EventSimulator _eventSimulator = new EventSimulator();
+	private readonly HangulComposer _hangulComposer = new();
+	private readonly DispatcherTimer _keyboardStateSyncTimer;
 	private TaskPoolGlobalHook _hook = null!;
 
 	/// <summary>RunAsync가 이미 호출되어 실행 중인지 여부</summary>
@@ -40,12 +42,20 @@ public class DreamineVirtualKeyboard : UserControl, IDisposable
 	protected Button? _inputModeBtn;
 
 	private CancellationTokenSource? _repeatBackspaceCts;
+	private Key? _repeatBackspaceKey;
 
 	private DateTime _lastSelfImeToggleAt = DateTime.MinValue;
 	private DateTime _lastSelfLangSwitchAt = DateTime.MinValue;
+	private DateTime _lastSelfShiftAt = DateTime.MinValue;
+	private bool? _pendingKoreanInputMode;
+	private DateTime _pendingKoreanInputModeUntil = DateTime.MinValue;
 	private static readonly TimeSpan _guard = TimeSpan.FromMilliseconds(350);
 	private bool InImeGuard => (DateTime.UtcNow - _lastSelfImeToggleAt) < _guard;
 	private bool InLangGuard => (DateTime.UtcNow - _lastSelfLangSwitchAt) < _guard;
+	private bool HasPendingKoreanInputMode => _pendingKoreanInputMode.HasValue && DateTime.UtcNow < _pendingKoreanInputModeUntil;
+	// 문자 입력 시 대문자/기호를 위해 스스로 Shift를 눌렀다 떼는 동안, 전역 훅이
+	// 그걸 실제 Shift 토글로 오인해 상태를 뒤집지 않도록 하는 가드.
+	private bool InShiftGuard => (DateTime.UtcNow - _lastSelfShiftAt) < _guard;
 
 	private bool _disposed;
 
@@ -128,7 +138,13 @@ public class DreamineVirtualKeyboard : UserControl, IDisposable
 
 	public LanguageCode CurrentLang { get; private set; }
 	public bool IsPressedShift { get; private set; }
-	public bool IsPressedCapsLock { get; private set; }
+
+	/// <summary>
+	/// CapsLock은 로컬 토글이 아니라 OS 실제 상태를 단일 소스로 읽는다.
+	/// → 물리 키보드로 CapsLock을 눌러도 그대로 반영되고, 가상/물리가 서로 안 싸운다.
+	/// </summary>
+	public bool IsPressedCapsLock => Keyboard.IsKeyToggled(System.Windows.Input.Key.CapsLock);
+
 	public bool IsPressedCtrl { get; set; }
 	public bool ImeMode { get; private set; }
 
@@ -138,9 +154,18 @@ public class DreamineVirtualKeyboard : UserControl, IDisposable
 
 	public DreamineVirtualKeyboard()
 	{
+		_keyboardStateSyncTimer = new DispatcherTimer(DispatcherPriority.Background)
+		{
+			Interval = TimeSpan.FromMilliseconds(160),
+		};
+		_keyboardStateSyncTimer.Tick += SynchronizeKeyboardState;
+
 		Loaded += KeyboardUserControl_Loaded;
 		Unloaded += KeyboardUserControl_Unloaded;
 		IsVisibleChanged += KeyboardUserControl_IsVisibleChanged;
+		AddHandler(PreviewMouseLeftButtonUpEvent, (MouseButtonEventHandler)BackspacePointerReleased, true);
+		AddHandler(PreviewTouchUpEvent, (EventHandler<TouchEventArgs>)BackspacePointerReleased, true);
+		AddHandler(LostMouseCaptureEvent, (MouseEventHandler)BackspaceMouseCaptureLost, true);
 		InputLanguageManager.Current.InputLanguageChanged += OnInputLanguageChanged;
 
 		_ = RegisterHookEventsAsync();
@@ -178,16 +203,6 @@ public class DreamineVirtualKeyboard : UserControl, IDisposable
 		await Task.Yield();
 		if (_hookRunning)
 			return;
-
-		bool forceHook = string.Equals(
-			Environment.GetEnvironmentVariable("VK_FORCE_HOOK"),
-			"1", StringComparison.Ordinal);
-
-		if (Debugger.IsAttached && !forceHook)
-		{
-			_hookRunning = false;
-			return;
-		}
 
 		_hook ??= new TaskPoolGlobalHook();
 
@@ -284,15 +299,15 @@ public class DreamineVirtualKeyboard : UserControl, IDisposable
 	{
 		if (_langBtn != null)
 		{
-			_langBtn.Content = CurrentLang.ToString().Split("_")[1].ToUpper();
+			_langBtn.Visibility = Visibility.Collapsed;
 		}
 	}
 
-	protected bool UpdateInputModeKey()
+	protected bool UpdateInputModeKey(bool readSystemIme = true)
 	{
 		var imeModeChanged = false;
 
-		if (!InImeGuard)
+		if (readSystemIme && !InImeGuard)
 		{
 			var imeMode = ImeHelper.GetImeMode();
 			if (ImeMode != imeMode)
@@ -304,18 +319,7 @@ public class DreamineVirtualKeyboard : UserControl, IDisposable
 
 		if (_inputModeBtn != null)
 		{
-			switch (CurrentLang)
-			{
-				case LanguageCode.ko_KR:
-					_inputModeBtn.Content = ImeMode ? "가" : "abc";
-					break;
-				case LanguageCode.zh_CN:
-					_inputModeBtn.Content = ImeMode ? "中" : "英";
-					break;
-				default:
-					_inputModeBtn.Content = "abc";
-					break;
-			}
+			_inputModeBtn.Content = CurrentLang == LanguageCode.ko_KR && ImeMode ? "가" : "abc";
 		}
 
 		return imeModeChanged;
@@ -323,21 +327,208 @@ public class DreamineVirtualKeyboard : UserControl, IDisposable
 
 	protected void RefreshKeyboardLayout(string lang = "")
 	{
-		//SetLanguage(lang);
+		SetLanguage(lang);
 		FindElements();
 		UpdateInputModeKey();
 		UpdateKeys();
 	}
 
+	private void SynchronizeKeyboardState(object? sender, EventArgs e)
+	{
+		if (!IsVisible || DesignerProperties.GetIsInDesignMode(this))
+			return;
+
+		if (HasPendingKoreanInputMode)
+		{
+			RefreshKeyboardVisualState(false);
+			return;
+		}
+
+		_pendingKoreanInputMode = null;
+
+		var previousLang = CurrentLang;
+		var previousImeMode = ImeMode;
+
+		if (!InLangGuard)
+			SetLanguage(InputLanguageManager.Current.CurrentInputLanguage.Name);
+
+		UpdateInputModeKey();
+
+		if (previousLang != CurrentLang || previousImeMode != ImeMode)
+			UpdateKeys();
+	}
+
+	private bool TryHandleComposedTextKey(Key key)
+	{
+		if (Layout != VkLayout.Text && Layout != VkLayout.Password)
+			return false;
+
+		if (key.KeyCode < KeyCode.VcA || key.KeyCode > KeyCode.VcZ)
+			return false;
+
+		var text = key.GetDisplayText(IsPressedShift, IsPressedCapsLock, CurrentLang, ImeMode);
+		if (!HangulComposer.IsComposableJamo(text))
+			return false;
+
+		var edit = _hangulComposer.Input(text, GetTextBeforeCaret());
+		ReplaceTextTail(edit.ReplaceCount, edit.Text);
+		return true;
+	}
+
+	private void InsertRawText(string text)
+	{
+		_hangulComposer.Reset();
+		ReplaceTextTail(0, text);
+	}
+
+	private void ReplaceTextTail(int replaceCount, string text)
+	{
+		if (Layout == VkLayout.Password)
+		{
+			var password = VkbPasswordBoxFromTree()?.Password ?? string.Empty;
+			var keep = Math.Max(0, password.Length - replaceCount);
+			SetPassword(password[..keep] + text);
+			return;
+		}
+
+		if (VkbTextBoxFromTree() is not { } textBox)
+			return;
+
+		var currentText = textBox.Text ?? string.Empty;
+		var selectionStart = Math.Clamp(textBox.SelectionStart, 0, currentText.Length);
+		var selectionLength = Math.Clamp(textBox.SelectionLength, 0, currentText.Length - selectionStart);
+
+		if (selectionLength > 0)
+		{
+			textBox.SelectedText = text;
+			textBox.CaretIndex = selectionStart + text.Length;
+		}
+		else
+		{
+			var removeStart = Math.Max(0, selectionStart - replaceCount);
+			removeStart = Math.Min(removeStart, currentText.Length);
+			var removeLength = Math.Clamp(selectionStart - removeStart, 0, currentText.Length - removeStart);
+			textBox.Text = currentText.Remove(removeStart, removeLength).Insert(removeStart, text);
+			textBox.CaretIndex = removeStart + text.Length;
+		}
+
+		textBox.GetBindingExpression(TextBox.TextProperty)?.UpdateSource();
+	}
+
+	private string GetTextBeforeCaret()
+	{
+		if (Layout == VkLayout.Password)
+			return VkbPasswordBoxFromTree()?.Password ?? string.Empty;
+
+		if (VkbTextBoxFromTree() is not { } textBox)
+			return string.Empty;
+
+		var caret = Math.Clamp(textBox.CaretIndex, 0, textBox.Text.Length);
+		return textBox.Text[..caret];
+	}
+
+	private void SetPassword(string password)
+	{
+		if (VkbPasswordBoxFromTree() is { } passwordBox)
+			passwordBox.Password = password;
+	}
+
+	private TextBox? VkbTextBoxFromTree()
+	{
+		var window = Window.GetWindow(this) ?? this as DependencyObject;
+		return window == null ? null : FindByNameInVisualTree<TextBox>(window, "VkbTextBox");
+	}
+
+	private PasswordBox? VkbPasswordBoxFromTree()
+	{
+		var window = Window.GetWindow(this) ?? this as DependencyObject;
+		return window == null ? null : FindByNameInVisualTree<PasswordBox>(window, "VkbPasswordBox");
+	}
+
+	/// <summary>
+	/// 문자 키를 입력한다. Shift 토글/CapsLock 상태에 따라 물리 Shift를 한 글자만
+	/// 감싸서 대문자/기호를 만든다. 상태는 클릭 핸들러가 직접 관리하므로 전역 훅이
+	/// 꺼져 있어도(디버거 실행 등) 동작한다.
+	/// </summary>
+	private void SimulateCharKey(Key key)
+	{
+		var kc = key.KeyCode;
+
+		// 대문자/기호는 '가상 Shift 토글'로만 결정한다.
+		// CapsLock(영문 대문자화)은 OS가 주입된 문자 키에 자동 적용하므로 여기서 감싸지 않는다.
+		var useShift = IsPressedShift;
+
+		if (useShift)
+		{
+			_lastSelfShiftAt = DateTime.UtcNow;
+			_eventSimulator.SimulateKeyPress(KeyCode.VcLeftShift);
+			_eventSimulator.SimulateKeyPress(kc);
+			_eventSimulator.SimulateKeyRelease(kc);
+			_eventSimulator.SimulateKeyRelease(KeyCode.VcLeftShift);
+			_lastSelfShiftAt = DateTime.UtcNow;
+		}
+		else
+		{
+			_eventSimulator.SimulateKeyPress(kc);
+			_eventSimulator.SimulateKeyRelease(kc);
+		}
+	}
+
 	private void ReleaseBackspaceRepeat()
 	{
+		if (!Dispatcher.CheckAccess())
+		{
+			Dispatcher.BeginInvoke(new Action(ReleaseBackspaceRepeat), DispatcherPriority.Send);
+			return;
+		}
+
 		if (_repeatBackspaceCts != null)
 		{
 			_repeatBackspaceCts.Cancel();
 			_repeatBackspaceCts.Dispose();
 			_repeatBackspaceCts = null;
-			_eventSimulator.SimulateKeyRelease(KeyCode.VcBackspace);
 		}
+
+		if (_repeatBackspaceKey?.IsMouseCaptured == true)
+			_repeatBackspaceKey.ReleaseMouseCapture();
+
+		_repeatBackspaceKey = null;
+		_eventSimulator.SimulateKeyRelease(KeyCode.VcBackspace);
+	}
+
+	private void StartBackspaceRepeat(Key key)
+	{
+		if (_repeatBackspaceCts != null)
+			return;
+
+		_repeatBackspaceKey = key;
+		key.CaptureMouse();
+		SimulateBackspaceStroke();
+
+		_repeatBackspaceCts = new CancellationTokenSource();
+		var token = _repeatBackspaceCts.Token;
+
+		_ = Task.Run(async () =>
+		{
+			try
+			{
+				await Task.Delay(400, token).ConfigureAwait(false);
+				while (!token.IsCancellationRequested)
+				{
+					SimulateBackspaceStroke();
+					await Task.Delay(50, token).ConfigureAwait(false);
+				}
+			}
+			catch (OperationCanceledException)
+			{
+			}
+		}, token);
+	}
+
+	private void SimulateBackspaceStroke()
+	{
+		_eventSimulator.SimulateKeyPress(KeyCode.VcBackspace);
+		_eventSimulator.SimulateKeyRelease(KeyCode.VcBackspace);
 	}
 
 	private string NormalizeLanguageString(string lang)
@@ -367,7 +558,7 @@ public class DreamineVirtualKeyboard : UserControl, IDisposable
 
 		lang = NormalizeLanguageString(lang);
 
-		CurrentLang = lang switch
+		var currentLang = lang switch
 		{
 			"ko-KR" => LanguageCode.ko_KR,
 			"vi-VN" => LanguageCode.vi_VN,
@@ -375,7 +566,121 @@ public class DreamineVirtualKeyboard : UserControl, IDisposable
 			_ => LanguageCode.en_US
 		};
 
+		if (CurrentLang == currentLang)
+			return;
+
+		CurrentLang = currentLang;
 		OnKeyboardLanguageChanged?.Invoke(this, CurrentLang);
+	}
+
+	private bool SetKoreanEnglishMode(bool useKorean)
+	{
+		_lastSelfLangSwitchAt = DateTime.UtcNow;
+		_lastSelfImeToggleAt = DateTime.UtcNow;
+		_pendingKoreanInputMode = useKorean;
+		_pendingKoreanInputModeUntil = DateTime.UtcNow + TimeSpan.FromMilliseconds(900);
+
+		var targetName = useKorean ? "ko-KR" : "en-US";
+		try
+		{
+			var available = InputLanguageManager.Current.AvailableInputLanguages;
+			var match = available?
+				.Cast<System.Globalization.CultureInfo>()
+				.FirstOrDefault(c => string.Equals(c.Name, targetName, StringComparison.OrdinalIgnoreCase));
+
+			if (match != null)
+			{
+				InputLanguageManager.Current.CurrentInputLanguage = match;
+				SetLanguage(match.Name);
+			}
+			else
+			{
+				SetLanguage(targetName);
+			}
+
+			EnsurePreviewFocus();
+			ApplyDesiredImeMode(useKorean);
+			RefreshKeyboardVisualState(false);
+			RecheckKeyboardStateSoon(useKorean);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			Debug.WriteLine($"[VK] SetKoreanEnglishMode failed: {ex.Message}");
+		}
+
+		return false;
+	}
+
+	private void ApplyDesiredImeMode(bool useKorean)
+	{
+		var currentImeMode = ImeHelper.GetImeMode();
+		if (currentImeMode != useKorean)
+		{
+			if (!ImeHelper.SetImeMode(useKorean))
+			{
+				switch (CurrentLang)
+				{
+					case LanguageCode.ko_KR:
+						_eventSimulator.SimulateKeyPress(KeyCode.VcHangul);
+						_eventSimulator.SimulateKeyRelease(KeyCode.VcHangul);
+						break;
+					case LanguageCode.zh_CN:
+						_eventSimulator.SimulateKeyPress(KeyCode.VcLeftShift);
+						_eventSimulator.SimulateKeyRelease(KeyCode.VcLeftShift);
+						break;
+				}
+			}
+		}
+
+		ImeMode = useKorean;
+	}
+
+	private bool IsKoreanInputActive()
+	{
+		if (HasPendingKoreanInputMode)
+			return _pendingKoreanInputMode == true;
+
+		var currentLanguage = InputLanguageManager.Current.CurrentInputLanguage.Name;
+		var isKoreanLanguage = string.Equals(
+			NormalizeLanguageString(currentLanguage),
+			"ko-KR",
+			StringComparison.OrdinalIgnoreCase);
+
+		return isKoreanLanguage && ImeHelper.GetImeMode();
+	}
+
+	private void RecheckKeyboardStateSoon(bool useKorean)
+	{
+		var remaining = 5;
+		DispatcherTimer timer = new() { Interval = TimeSpan.FromMilliseconds(100) };
+		timer.Tick += (_, __) =>
+		{
+			EnsurePreviewFocus();
+			ApplyDesiredImeMode(useKorean);
+			RefreshKeyboardVisualState(false);
+
+			if (--remaining <= 0)
+			{
+				timer.Stop();
+				_pendingKoreanInputMode = null;
+				RefreshKeyboardVisualState();
+			}
+		};
+		timer.Start();
+	}
+
+	private void RefreshKeyboardVisualState(bool readSystemIme = true)
+	{
+		if (HasPendingKoreanInputMode)
+		{
+			ImeMode = _pendingKoreanInputMode == true;
+			readSystemIme = false;
+		}
+
+		UpdateInputModeKey(readSystemIme);
+		UpdateKeys();
+		EnsurePreviewFocus();
 	}
 
 	private bool IsNumLockOn()
@@ -419,10 +724,14 @@ public class DreamineVirtualKeyboard : UserControl, IDisposable
 
 	private void OnInputLanguageChanged(object sender, InputLanguageEventArgs e)
 	{
+		_hangulComposer.Reset();
+
 		if (InLangGuard)
 		{
 			SetLanguage(e.NewLanguage.Name);
-			UpdateLangKey();
+			UpdateInputModeKey();
+			UpdateKeys();
+			EnsurePreviewFocus();
 			return;
 		}
 
@@ -443,6 +752,7 @@ public class DreamineVirtualKeyboard : UserControl, IDisposable
 			RefreshKeyboardLayout();
 			TryTogglePreviewVisuals();
 			EnsurePreviewFocus();
+			_keyboardStateSyncTimer.Start();
 		}, DispatcherPriority.SystemIdle);
 	}
 
@@ -451,6 +761,7 @@ public class DreamineVirtualKeyboard : UserControl, IDisposable
 	/// </summary>
 	private void KeyboardUserControl_Unloaded(object sender, RoutedEventArgs e)
 	{
+		_keyboardStateSyncTimer.Stop();
 		Dispose(); // 안전
 	}
 
@@ -460,17 +771,19 @@ public class DreamineVirtualKeyboard : UserControl, IDisposable
 
 		if (!isVisible)
 		{
+			_keyboardStateSyncTimer.Stop();
+
 			if (IsPressedShift)
 			{
 				IsPressedShift = false;
 				_eventSimulator.SimulateKeyRelease(KeyCode.VcLeftShift);
 			}
-
-			if (IsPressedCapsLock)
-			{
-				IsPressedCapsLock = false;
-				_eventSimulator.SimulateKeyRelease(KeyCode.VcCapsLock);
-			}
+			// CapsLock은 OS 상태를 그대로 두고 건드리지 않는다(단일 소스).
+		}
+		else if (IsLoaded)
+		{
+			SynchronizeKeyboardState(this, EventArgs.Empty);
+			_keyboardStateSyncTimer.Start();
 		}
 	}
 
@@ -487,16 +800,20 @@ public class DreamineVirtualKeyboard : UserControl, IDisposable
 			{
 				case KeyCode.VcLeftShift:
 				case KeyCode.VcRightShift:
-					if (Layout == VkLayout.Text || Layout == VkLayout.Password)
-						IsPressedShift = true;
-					if (_keys?.FirstOrDefault(k => k.KeyCode == KeyCode.VcLeftShift) is { } shiftKey)
-						shiftKey.IsPressed = true;
-					refreshLayout = true;
+					// 문자 입력용 자체 Shift 시뮬레이션은 무시(토글 상태 보존).
+					if (!InShiftGuard)
+					{
+						if (Layout == VkLayout.Text || Layout == VkLayout.Password)
+							IsPressedShift = true;
+						if (_keys?.FirstOrDefault(k => k.KeyCode == KeyCode.VcLeftShift) is { } shiftKey)
+							shiftKey.IsPressed = true;
+						refreshLayout = true;
+					}
 					break;
 				case KeyCode.VcCapsLock:
-					IsPressedCapsLock = !IsPressedCapsLock;
+					// OS CapsLock 토글 결과를 표시에 반영(상태 자체는 OS가 소유).
 					if (_keys?.FirstOrDefault(k => k.KeyCode == KeyCode.VcCapsLock) is { } capsLockKey)
-						capsLockKey.IsPressed = true;
+						capsLockKey.IsPressed = IsPressedCapsLock;
 					refreshLayout = true;
 					break;
 				case KeyCode.VcLeftControl:
@@ -507,6 +824,9 @@ public class DreamineVirtualKeyboard : UserControl, IDisposable
 						ctrlKey.IsPressed = true;
 					break;
 				default:
+					if (keyCode >= KeyCode.VcA && keyCode <= KeyCode.VcZ)
+						_hangulComposer.Reset();
+
 					if (_keys?.FirstOrDefault(k => k.KeyCode == keyCode) is { } keyBtn)
 						keyBtn.IsPressed = true;
 					break;
@@ -526,10 +846,13 @@ public class DreamineVirtualKeyboard : UserControl, IDisposable
 			{
 				case KeyCode.VcLeftShift:
 				case KeyCode.VcRightShift:
-					IsPressedShift = false;
-					if (_keys?.FirstOrDefault(k => k.KeyCode == KeyCode.VcLeftShift) is { } shiftKey)
-						shiftKey.IsPressed = false;
-					UpdateKeys();
+					if (!InShiftGuard)
+					{
+						IsPressedShift = false;
+						if (_keys?.FirstOrDefault(k => k.KeyCode == KeyCode.VcLeftShift) is { } shiftKey)
+							shiftKey.IsPressed = false;
+						UpdateKeys();
+					}
 					break;
 				case KeyCode.VcCapsLock:
 					if (_keys?.FirstOrDefault(k => k.KeyCode == KeyCode.VcCapsLock) is { } capsLockKey)
@@ -555,6 +878,17 @@ public class DreamineVirtualKeyboard : UserControl, IDisposable
 		ReleaseBackspaceRepeat();
 	}
 
+	private void BackspacePointerReleased(object sender, InputEventArgs e)
+	{
+		ReleaseBackspaceRepeat();
+	}
+
+	private void BackspaceMouseCaptureLost(object sender, MouseEventArgs e)
+	{
+		if (_repeatBackspaceCts != null && _repeatBackspaceKey?.IsMouseCaptured != true)
+			ReleaseBackspaceRepeat();
+	}
+
 	private void KeyClick(object sender, RoutedEventArgs e)
 	{
 		if (Layout != VkLayout.Text && Layout != VkLayout.Password)
@@ -571,46 +905,15 @@ public class DreamineVirtualKeyboard : UserControl, IDisposable
 
 		if (e.OriginalSource is Button { Name: "_langBtn" })
 		{
-			_lastSelfLangSwitchAt = DateTime.UtcNow;
-
-			_eventSimulator.SimulateKeyPress(KeyCode.VcLeftAlt);
-			_eventSimulator.SimulateKeyPress(KeyCode.VcLeftShift);
-			_eventSimulator.SimulateKeyRelease(KeyCode.VcLeftAlt);
-			_eventSimulator.SimulateKeyRelease(KeyCode.VcLeftShift);
-
-			DispatcherTimer t = new() { Interval = TimeSpan.FromMilliseconds(120) };
-			t.Tick += (_, __) => { t.Stop(); RefreshKeyboardLayout(); };
-			t.Start();
+			_hangulComposer.Reset();
+			SetKoreanEnglishMode(!IsKoreanInputActive());
 			return;
 		}
 
 		if (e.OriginalSource is Button { Name: "_inputModeBtn" })
 		{
-			_lastSelfImeToggleAt = DateTime.UtcNow;
-
-			switch (CurrentLang)
-			{
-				case LanguageCode.ko_KR:
-					_eventSimulator.SimulateKeyPress(KeyCode.VcHangul);
-					_eventSimulator.SimulateKeyRelease(KeyCode.VcHangul);
-					break;
-				case LanguageCode.zh_CN:
-					_eventSimulator.SimulateKeyPress(KeyCode.VcLeftShift);
-					_eventSimulator.SimulateKeyRelease(KeyCode.VcLeftShift);
-					break;
-				default:
-					break;
-			}
-
-			DispatcherTimer t = new() { Interval = TimeSpan.FromMilliseconds(120) };
-			t.Tick += (_, __) =>
-			{
-				t.Stop();
-				UpdateInputModeKey();
-				UpdateKeys();
-				EnsurePreviewFocus();
-			};
-			t.Start();
+			_hangulComposer.Reset();
+			SetKoreanEnglishMode(!IsKoreanInputActive());
 			return;
 		}
 
@@ -621,11 +924,27 @@ public class DreamineVirtualKeyboard : UserControl, IDisposable
 
 		switch (keyCode)
 		{
+			// Shift는 토글(lock). 물리 Shift를 눌러두지 않고 상태만 들고 있다가,
+			// 문자 입력 때 SimulateCharKey에서 한 글자씩 감싼다. → 전역 훅 없이도 동작.
 			case KeyCode.VcLeftShift:
+			case KeyCode.VcRightShift:
 				IsPressedShift = !IsPressedShift;
 				key.IsPressed = IsPressedShift;
-				if (IsPressedShift) _eventSimulator.SimulateKeyPress(keyCode);
-				else _eventSimulator.SimulateKeyRelease(keyCode);
+				UpdateKeys();
+				break;
+
+			// CapsLock: 실제 OS CapsLock을 토글하고, 반영은 OS 상태를 다시 읽어서 한다.
+			case KeyCode.VcCapsLock:
+				_eventSimulator.SimulateKeyPress(keyCode);
+				_eventSimulator.SimulateKeyRelease(keyCode);
+				DispatcherTimer tCaps = new() { Interval = TimeSpan.FromMilliseconds(120) };
+				tCaps.Tick += (_, __) =>
+				{
+					tCaps.Stop();
+					key.IsPressed = IsPressedCapsLock;
+					UpdateKeys();
+				};
+				tCaps.Start();
 				break;
 
 			case KeyCode.VcLeftControl:
@@ -636,45 +955,47 @@ public class DreamineVirtualKeyboard : UserControl, IDisposable
 				break;
 
 			case KeyCode.VcBackspace:
-				if (_repeatBackspaceCts != null) return;
-
-				_eventSimulator.SimulateKeyPress(keyCode);
-				_repeatBackspaceCts = new CancellationTokenSource();
-				var token = _repeatBackspaceCts.Token;
-				_ = Task.Run(async () =>
-				{
-					await Task.Delay(400);
-					while (!token.IsCancellationRequested)
-					{
-						_eventSimulator.SimulateKeyPress(keyCode);
-						await Task.Delay(50, token);
-					}
-				}, token);
+				_hangulComposer.Reset();
+				StartBackspaceRepeat(key);
 				break;
 
 			case KeyCode.VcEnter:
+				_hangulComposer.Reset();
 				_eventSimulator.SimulateKeyPress(keyCode);
 				_eventSimulator.SimulateKeyRelease(keyCode);
 				break;
 
 			case KeyCode.VcTab:
+				_hangulComposer.Reset();
 				_eventSimulator.SimulateTextEntry("    ");
 				break;
 
+			case KeyCode.VcSpace:
+				InsertRawText(" ");
+				break;
+
 			default:
-				_eventSimulator.SimulateKeyPress(keyCode);
-				_eventSimulator.SimulateKeyRelease(keyCode);
-
 				if (IsPressedCtrl)
+				{
+					_hangulComposer.Reset();
+					// Ctrl 조합(단축키)은 한 번만 적용하고 해제(one-shot).
+					_eventSimulator.SimulateKeyPress(keyCode);
+					_eventSimulator.SimulateKeyRelease(keyCode);
 					_eventSimulator.SimulateKeyRelease(KeyCode.VcLeftControl);
-
-				if (IsPressedShift)
-					_eventSimulator.SimulateKeyRelease(KeyCode.VcLeftShift);
+					IsPressedCtrl = false;
+					if (_keys?.FirstOrDefault(k => k.KeyCode == KeyCode.VcLeftControl) is { } ctrlKey)
+						ctrlKey.IsPressed = false;
+				}
+				else
+				{
+					if (!TryHandleComposedTextKey(key))
+					{
+						_hangulComposer.Reset();
+						SimulateCharKey(key);
+					}
+				}
 				break;
 		}
-
-		if (keyCode is KeyCode.VcLeftShift or KeyCode.VcRightShift or KeyCode.VcCapsLock)
-			UpdateKeys();
 
 		RaiseEvent(new RoutedEventArgs(VirtualKeyDownEvent, key.KeyCode));
 	}
@@ -696,12 +1017,15 @@ public class DreamineVirtualKeyboard : UserControl, IDisposable
 		try
 		{
 			// 공통: 눌린 키/반복/훅 정리
+			_keyboardStateSyncTimer.Stop();
 			ReleasePressedKeys();
 			ReleaseBackspaceRepeat();
 			UnregisterHookEvents();      // _hook.Dispose() 포함
 
 			if (disposing)
 			{
+				_keyboardStateSyncTimer.Tick -= SynchronizeKeyboardState;
+
 				// 관리 리소스/이벤트 해제
 				Loaded -= KeyboardUserControl_Loaded;
 				Unloaded -= KeyboardUserControl_Unloaded;
