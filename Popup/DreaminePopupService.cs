@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Threading;
@@ -115,12 +115,12 @@ namespace Dreamine.UI.Wpf.Equipment.Popup
 
 		/// <summary>
 		/// \brief 외부에서 생성한 팝업 창을 DreaminePopupService 관리 대상에 등록합니다.
-		/// \details
+		/// Details:
 		///  - _opened / _optionsByWindow 에 모두 추가하고,
 		///    Closed 이벤트에서 정리까지 수행합니다.
-		/// </details>
 		/// <Param name="window">등록할 팝업 Window.</Param>
 		/// <Param name="options">해당 Window에 대응되는 BlinkPopupOptions.</Param>
+		/// </summary>
 		public void RegisterWindow(Window window, BlinkPopupOptions options)
 		{
 			if (window is null)

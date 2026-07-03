@@ -1,4 +1,4 @@
-﻿namespace Dreamine.UI.Wpf.Equipment.DreamineVirtualKeyboard;
+namespace Dreamine.UI.Wpf.Equipment.DreamineVirtualKeyboard;
 
 public static class ImeHelper
 {

@@ -134,7 +134,7 @@ public static class DreamineVirtualKeyboardAssist
 	/// @details
 	/// - Style/Trigger에서 ON/OFF 하십시오.
 	/// - True가 되면 대상 요소 위에 <see cref="DreamineVkbIconAdorner"/> 를 부착합니다.
-	/// </details>
+	/// </summary>
 	public static readonly DependencyProperty VkbIconVisibleProperty =
 		DependencyProperty.RegisterAttached(
 			"VkbIconVisible",
@@ -155,7 +155,7 @@ public static class DreamineVirtualKeyboardAssist
 	/// @details
 	/// - <see cref="FrameworkElement"/> 이면 Loaded 시점까지 대기.
 	/// - 순수 <see cref="UIElement"/> 는 Dispatcher로 지연 적용.
-	/// </details>
+	/// </summary>
 	private static void OnVkbIconVisibleChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
 	{
 		if (d is not UIElement el) return;

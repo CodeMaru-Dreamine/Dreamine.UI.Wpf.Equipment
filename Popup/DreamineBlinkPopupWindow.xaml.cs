@@ -30,12 +30,12 @@ namespace Dreamine.UI.Wpf.Equipment.Popup
 	/// <summary>
 	/// \class DreamineBlinkPopupWindow
 	/// \brief BlinkPopupWindow의 코드비하인드 클래스.
-	/// \details
+	/// Details:
 	///  - BlinkPopupOptions를 기반으로 ViewModel을 생성하고 DataContext에 주입합니다.
 	///  - OK/Cancel 버튼 클릭 시 CloseRequested 이벤트를 통해 닫기 요청을 처리합니다.
 	///  - Alt+F4 및 WM_SYSCOMMAND(SC_CLOSE)를 차단하는 옵션(BlockAltF4)을 지원합니다.
 	///  - 권한 인증(로그인)이 필요한 경우, 닫기 직전에 LoginDialog를 호출하여 인증을 수행합니다.
-	/// </details>
+	/// </summary>
 	public partial class DreamineBlinkPopupWindow : Window
 	{
 		/// <summary>\brief 생성 시 전달된 팝업 옵션. </summary>
@@ -126,11 +126,11 @@ namespace Dreamine.UI.Wpf.Equipment.Popup
 
 		/// <summary>
 		/// \brief 창 닫기 직전 훅.
-		/// \details
+		/// Details:
 		///  - OK/Cancel/SystemClose 동작에 대해 권한 인증이 필요한지 판정합니다.
 		///  - 인증이 필요하면 일단 닫기를 막고(e.Cancel = true), 다음 틱에서 LoginDialog를 띄웁니다.
 		///  - 이미 인증을 통과했거나, 인증이 필요 없는 경우 DialogResult를 반영하고 그대로 닫습니다.
-		/// </details>
+		/// </summary>
 		protected override void OnClosing(CancelEventArgs e)
 		{
 			if (_lastAction == PopupAction.None)

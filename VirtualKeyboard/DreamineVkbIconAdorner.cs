@@ -1,53 +1,65 @@
-﻿using System.Windows;
+using System;
+using System.Windows;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Shapes;
 
 namespace Dreamine.UI.Wpf.Equipment.DreamineVirtualKeyboard;
 
-public class DreamineVkbIconAdorner : Adorner
+public sealed class DreamineVkbIconAdorner : Adorner
 {
-    private readonly Path _iconPath;
+    private Action<object?, MouseButtonEventArgs>? _previewMouseDownAction;
 
-    public DreamineVkbIconAdorner(UIElement adornedElement) : base(adornedElement)
+    public DreamineVkbIconAdorner(UIElement adornedElement)
+        : base(adornedElement)
     {
-        _iconPath = new Path
-        {
-            Data = Geometry.Parse("M320-280h320v-80H320v80ZM200-400h80v-80h-80v80Zm120 0h80v-80h-80v80Zm120 0h80v-80h-80v80Zm120 0h80v-80h-80v80Zm120 0h80v-80h-80v80ZM160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v480q0 33-23.5 56.5T800-160H160Zm0-440h640v-120H160v120Zm0 360h640v-280H160v280Zm0 0v-280 280Z"),
-            Fill = Brushes.Red,
-            Stretch = Stretch.Uniform,
-            Focusable = false
-        };
-
-        AddVisualChild(_iconPath);
+        IsHitTestVisible = true;
+        Cursor = Cursors.Hand;
+        PreviewMouseDown += OnPreviewMouseDown;
     }
 
-    protected override int VisualChildrenCount => 1;
-    protected override Visual GetVisualChild(int index) => _iconPath;
+    public void SetPreviewMouseDownAction(Action<object?, MouseButtonEventArgs> action)
+        => _previewMouseDownAction = action;
 
-    protected override Size ArrangeOverride(Size finalSize)
+    protected override void OnRender(DrawingContext drawingContext)
     {
-        if (AdornedElement is FrameworkElement target)
+        base.OnRender(drawingContext);
+
+        var adornedSize = AdornedElement.RenderSize;
+        const double width = 34;
+        const double height = 22;
+        var rect = new Rect(
+            Math.Max(0, adornedSize.Width - width - 4),
+            Math.Max(0, adornedSize.Height - height - 4),
+            width,
+            height);
+
+        var background = new SolidColorBrush(Color.FromArgb(230, 45, 52, 64));
+        var border = new Pen(new SolidColorBrush(Color.FromRgb(120, 140, 160)), 1);
+        drawingContext.DrawRoundedRectangle(background, border, rect, 4, 4);
+
+        var keyBrush = new SolidColorBrush(Color.FromRgb(230, 236, 244));
+        const double keySize = 4;
+        for (var row = 0; row < 2; row++)
         {
-            _iconPath.Width = target.ActualHeight;
-            _iconPath.Height = target.ActualHeight;
-
-            double iconWidth = _iconPath.Width;
-            double iconHeight = _iconPath.Height;
-
-            double x = target.ActualWidth - iconWidth;
-            double y = target.ActualHeight - iconHeight;
-
-            _iconPath.Arrange(new Rect(x, y, iconWidth, iconHeight));
+            for (var col = 0; col < 5; col++)
+            {
+                var keyRect = new Rect(rect.Left + 5 + col * 5, rect.Top + 5 + row * 6, keySize, keySize);
+                drawingContext.DrawRoundedRectangle(keyBrush, null, keyRect, 1, 1);
+            }
         }
 
-        return finalSize;
+        drawingContext.DrawRoundedRectangle(
+            keyBrush,
+            null,
+            new Rect(rect.Left + 8, rect.Top + 17, 18, 2),
+            1,
+            1);
     }
 
-    public void SetPreviewMouseDownAction(Action<object, MouseButtonEventArgs> previewMouseDownAction)
+    private void OnPreviewMouseDown(object sender, MouseButtonEventArgs e)
     {
-        _iconPath.PreviewMouseDown += new MouseButtonEventHandler((s, e) => previewMouseDownAction(s, e));
+        _previewMouseDownAction?.Invoke(sender, e);
+        e.Handled = true;
     }
 }
-

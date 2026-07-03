@@ -722,7 +722,7 @@ public class DreamineVirtualKeyboard : UserControl, IDisposable
 
 	#region Event Handler
 
-	private void OnInputLanguageChanged(object sender, InputLanguageEventArgs e)
+	private void OnInputLanguageChanged(object? sender, InputLanguageEventArgs e)
 	{
 		_hangulComposer.Reset();
 
@@ -739,7 +739,7 @@ public class DreamineVirtualKeyboard : UserControl, IDisposable
 		EnsurePreviewFocus();
 	}
 
-	private void KeyboardUserControl_Loaded(object sender, RoutedEventArgs e)
+	private void KeyboardUserControl_Loaded(object? sender, RoutedEventArgs e)
 	{
 		if (DesignerProperties.GetIsInDesignMode(this))
 			return;
@@ -759,13 +759,13 @@ public class DreamineVirtualKeyboard : UserControl, IDisposable
 	/// <summary>
 	/// @brief Visual 트리에서 떨어질 때(창 닫힘 포함) 안전 정리.
 	/// </summary>
-	private void KeyboardUserControl_Unloaded(object sender, RoutedEventArgs e)
+	private void KeyboardUserControl_Unloaded(object? sender, RoutedEventArgs e)
 	{
 		_keyboardStateSyncTimer.Stop();
 		Dispose(); // 안전
 	}
 
-	private void KeyboardUserControl_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+	private void KeyboardUserControl_IsVisibleChanged(object? sender, DependencyPropertyChangedEventArgs e)
 	{
 		if (e.NewValue is not bool isVisible) return;
 
@@ -878,18 +878,18 @@ public class DreamineVirtualKeyboard : UserControl, IDisposable
 		ReleaseBackspaceRepeat();
 	}
 
-	private void BackspacePointerReleased(object sender, InputEventArgs e)
+	private void BackspacePointerReleased(object? sender, InputEventArgs e)
 	{
 		ReleaseBackspaceRepeat();
 	}
 
-	private void BackspaceMouseCaptureLost(object sender, MouseEventArgs e)
+	private void BackspaceMouseCaptureLost(object? sender, MouseEventArgs e)
 	{
 		if (_repeatBackspaceCts != null && _repeatBackspaceKey?.IsMouseCaptured != true)
 			ReleaseBackspaceRepeat();
 	}
 
-	private void KeyClick(object sender, RoutedEventArgs e)
+	private void KeyClick(object? sender, RoutedEventArgs e)
 	{
 		if (Layout != VkLayout.Text && Layout != VkLayout.Password)
 		{
