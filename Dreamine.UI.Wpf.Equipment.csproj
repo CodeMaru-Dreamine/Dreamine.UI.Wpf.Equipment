@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFramework>net8.0-windows</TargetFramework>
@@ -7,7 +7,7 @@
 		<UseWPF>true</UseWPF>
 
 		<PackageId>Dreamine.UI.Wpf.Equipment</PackageId>
-		<Version>1.0.0</Version>
+		<Version>1.0.1</Version>
 		<Authors>Dreamine Core Team</Authors>
 		<Company>Dreamine</Company>
 		<Description>Equipment-grade WPF components: Virtual Keyboard, Blink Popup, Alarm Config.</Description>
@@ -17,7 +17,14 @@
 		<Title>Dreamine.UI.Wpf.Equipment</Title>
 		<Copyright>© 2025 Dreamine Core Team. All rights reserved.</Copyright>
 		<PackageProjectUrl>https://github.com/CodeMaru-Dreamine/Dreamine.MVVM.FullKit</PackageProjectUrl>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageIcon>icon.png</PackageIcon>
 	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="README.md" Pack="true" PackagePath="\" />
+		<None Include="icon.png" Pack="true" PackagePath="\" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="SharpHook" />
