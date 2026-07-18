@@ -5,10 +5,26 @@ using Dreamine.UI.Abstractions.VirtualKeyboard;
 
 namespace Dreamine.UI.Wpf.Equipment.DreamineVirtualKeyboard;
 
+/// <summary>
+/// \if KO
+/// <para>키 코드와 입력 상태에 따라 다국어 표시 문자를 갱신하는 가상 키 버튼입니다.</para>
+/// \endif
+/// \if EN
+/// <para>Represents a virtual-key button that updates multilingual display text from a key code and input state.</para>
+/// \endif
+/// </summary>
 public class Key : Button
 {
     #region Variable
 
+    /// <summary>
+    /// \if KO
+    /// <para>키 코드별 기본·Shift·언어별 표시 문자 매핑을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores default, Shift, and language-specific display mappings by key code.</para>
+    /// \endif
+    /// </summary>
     private static Dictionary<KeyCode, KeyData> _dicKeyData = new();
 
     #endregion
@@ -17,11 +33,27 @@ public class Key : Button
 
     #region IsPressed
 
+    /// <summary>
+    /// \if KO
+    /// <para>가상 키 눌림 상태 종속성 속성을 식별합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Identifies the virtual-key pressed-state dependency property.</para>
+    /// \endif
+    /// </summary>
     public static readonly new DependencyProperty IsPressedProperty =
         DependencyProperty.Register(nameof(IsPressed),
             typeof(bool),
             typeof(Key));
 
+    /// <summary>
+    /// \if KO
+    /// <para>가상 키가 눌린 상태인지 가져오거나 설정합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets or sets whether the virtual key is pressed.</para>
+    /// \endif
+    /// </summary>
     public new bool IsPressed
     {
         get { return (bool)GetValue(IsPressedProperty); }
@@ -32,9 +64,25 @@ public class Key : Button
 
     #region KeyCode
 
+    /// <summary>
+    /// \if KO
+    /// <para>네이티브 키 코드 종속성 속성을 식별합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Identifies the native key-code dependency property.</para>
+    /// \endif
+    /// </summary>
     public static readonly DependencyProperty KeyCodeProperty =
         DependencyProperty.Register(nameof(KeyCode), typeof(KeyCode), typeof(Key));
 
+    /// <summary>
+    /// \if KO
+    /// <para>버튼이 나타내는 네이티브 키 코드를 가져오거나 설정합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets or sets the native key code represented by the button.</para>
+    /// \endif
+    /// </summary>
     public KeyCode KeyCode
     {
         get { return (KeyCode)GetValue(KeyCodeProperty); }
@@ -43,6 +91,46 @@ public class Key : Button
 
     #endregion Public Method
 
+    /// <summary>
+    /// \if KO
+    /// <para>Shift·Caps Lock·언어·IME 상태에 맞는 표시 문자로 버튼 콘텐츠를 갱신합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Updates button content for the current Shift, Caps Lock, language, and IME state.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="shift">
+    /// \if KO
+    /// <para>Shift 활성 상태입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The Shift state.</para>
+    /// \endif
+    /// </param>
+    /// <param name="capsLock">
+    /// \if KO
+    /// <para>Caps Lock 활성 상태입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The Caps Lock state.</para>
+    /// \endif
+    /// </param>
+    /// <param name="languageCode">
+    /// \if KO
+    /// <para>표시 언어입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The display language.</para>
+    /// \endif
+    /// </param>
+    /// <param name="imeMode">
+    /// \if KO
+    /// <para>IME 언어 표시를 사용하려면 <see langword="true"/>입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para><see langword="true"/> to use IME-language display.</para>
+    /// \endif
+    /// </param>
     public void UpdateKey(bool shift, bool capsLock, LanguageCode languageCode, bool imeMode)
     {
         if (!_dicKeyData.TryGetValue(KeyCode, out var keyData)) return;
@@ -50,6 +138,54 @@ public class Key : Button
         Content = GetDisplayText(shift, capsLock, languageCode, imeMode);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>현재 키와 입력 상태에 사용할 표시 문자열을 계산합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Computes the display string for the current key and input state.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="shift">
+    /// \if KO
+    /// <para>Shift 활성 상태입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The Shift state.</para>
+    /// \endif
+    /// </param>
+    /// <param name="capsLock">
+    /// \if KO
+    /// <para>Caps Lock 활성 상태입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The Caps Lock state.</para>
+    /// \endif
+    /// </param>
+    /// <param name="languageCode">
+    /// \if KO
+    /// <para>표시 언어입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The display language.</para>
+    /// \endif
+    /// </param>
+    /// <param name="imeMode">
+    /// \if KO
+    /// <para>IME 언어 매핑을 적용하려면 <see langword="true"/>입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para><see langword="true"/> to apply IME-language mapping.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>상태에 맞는 표시 문자열이며 매핑이 없으면 빈 문자열입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The state-specific display string, or an empty string when no mapping exists.</para>
+    /// \endif
+    /// </returns>
     public string GetDisplayText(bool shift, bool capsLock, LanguageCode languageCode, bool imeMode)
     {
         if (!_dicKeyData.TryGetValue(KeyCode, out var keyData))
@@ -98,11 +234,27 @@ public class Key : Button
 
     #region Constructor
 
+    /// <summary>
+    /// \if KO
+    /// <para>모든 지원 키 코드의 표시 문자 매핑을 초기화합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Initializes display mappings for all supported key codes.</para>
+    /// \endif
+    /// </summary>
     static Key()
     {
         MappingKeys();
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>포커스를 받지 않고 누르는 즉시 클릭되는 새 가상 키를 만듭니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Initializes a nonfocusable virtual key that clicks on press.</para>
+    /// \endif
+    /// </summary>
     public Key()
     {
         Focusable = false;
@@ -114,6 +266,38 @@ public class Key : Button
 
 
     #region Private Method
+    /// <summary>
+    /// \if KO
+    /// <para>지정한 언어에 해당하는 기본 및 Shift 표시 문자를 가져옵니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the default and Shift display strings for a language.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="language">
+    /// \if KO
+    /// <para>조회할 언어입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The language to query.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>기본 표시 문자와 Shift 표시 문자 쌍입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>A pair containing default and Shift display strings.</para>
+    /// \endif
+    /// </returns>
+    /// <exception cref="KeyNotFoundException">
+    /// \if KO
+    /// <para>현재 <see cref="KeyCode"/>에 대한 매핑이 없을 때 발생합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Thrown when no mapping exists for the current <see cref="KeyCode"/>.</para>
+    /// \endif
+    /// </exception>
     private (string, string) GetKeyData(LanguageCode language)
     {
         var keyData = _dicKeyData[KeyCode];
@@ -142,6 +326,14 @@ public class Key : Button
         return (key, shiftKey);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>지원하는 문자·기능·숫자 패드·화살표 키의 표시 매핑을 다시 구성합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Rebuilds display mappings for supported character, function, numpad, and arrow keys.</para>
+    /// \endif
+    /// </summary>
     private static void MappingKeys()
     {
         _dicKeyData = new()

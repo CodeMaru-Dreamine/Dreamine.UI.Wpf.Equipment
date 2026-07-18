@@ -11,61 +11,180 @@ using Dreamine.UI.Abstractions.Popup;
 using Dreamine.UI.Wpf.Controls.MessageBox;
 namespace Dreamine.UI.Wpf.Equipment.Popup
 {
-	/// <summary>\enum PopupAction \brief 팝업 닫힘 유발 동작 구분.</summary>
+	/// <summary>
+	/// \if KO
+	/// <para>팝업 닫기를 유발한 사용자 또는 시스템 동작을 구분합니다.</para>
+	/// \endif
+	/// \if EN
+	/// <para>Identifies the user or system action that initiated popup closure.</para>
+	/// \endif
+	/// </summary>
 	internal enum PopupAction
 	{
-		/// <summary>\brief 아무 동작 없음. </summary>
+		/// <summary>
+		/// \if KO
+		/// <para>아직 닫기 동작이 없습니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>No close action has occurred.</para>
+		/// \endif
+		/// </summary>
 		None,
 
-		/// <summary>\brief OK 버튼 클릭. </summary>
+		/// <summary>
+		/// \if KO
+		/// <para>확인 버튼으로 닫습니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Closure was requested by the OK button.</para>
+		/// \endif
+		/// </summary>
 		Ok,
 
-		/// <summary>\brief Cancel 버튼 클릭. </summary>
+		/// <summary>
+		/// \if KO
+		/// <para>취소 버튼으로 닫습니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Closure was requested by the cancel button.</para>
+		/// \endif
+		/// </summary>
 		Cancel,
 
-		/// <summary>\brief 시스템 닫기(창 x / Alt+F4 등). </summary>
+		/// <summary>
+		/// \if KO
+		/// <para>창 닫기 또는 Alt+F4 같은 시스템 동작으로 닫습니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Closure was requested by a system action such as the close button or Alt+F4.</para>
+		/// \endif
+		/// </summary>
 		SystemClose
 	}
 
 	/// <summary>
-	/// \class DreamineBlinkPopupWindow
-	/// \brief BlinkPopupWindow의 코드비하인드 클래스.
-	/// Details:
-	///  - BlinkPopupOptions를 기반으로 ViewModel을 생성하고 DataContext에 주입합니다.
-	///  - OK/Cancel 버튼 클릭 시 CloseRequested 이벤트를 통해 닫기 요청을 처리합니다.
-	///  - Alt+F4 및 WM_SYSCOMMAND(SC_CLOSE)를 차단하는 옵션(BlockAltF4)을 지원합니다.
-	///  - 권한 인증(로그인)이 필요한 경우, 닫기 직전에 LoginDialog를 호출하여 인증을 수행합니다.
+	/// \if KO
+	/// <para>점멸 애니메이션, 결과 전달 및 선택적 시스템 닫기 차단을 제공하는 팝업 창입니다.</para>
+	/// \endif
+	/// \if EN
+	/// <para>Represents a popup window with blink animation, result propagation, and optional system-close blocking.</para>
+	/// \endif
 	/// </summary>
 	public partial class DreamineBlinkPopupWindow : Window
 	{
-		/// <summary>\brief 생성 시 전달된 팝업 옵션. </summary>
+		/// <summary>
+		/// \if KO
+		/// <para>창 생성 시 전달된 팝업 옵션을 보관합니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Stores popup options supplied when the window was created.</para>
+		/// \endif
+		/// </summary>
 		private readonly BlinkPopupOptions _opt;
 
-		/// <summary>\brief 배경 깜빡임에 사용되는 스토리보드. </summary>
+		/// <summary>
+		/// \if KO
+		/// <para>배경 색상 및 불투명도 점멸 스토리보드를 보관합니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Stores the background color and opacity blink storyboard.</para>
+		/// \endif
+		/// </summary>
 		private Storyboard? _blinkSb;
 
-		/// <summary>\brief 사용자가 요청한 DialogResult(OK=true, Cancel=false, SystemClose=null). </summary>
+		/// <summary>
+		/// \if KO
+		/// <para>확인, 취소 또는 시스템 닫기로 요청된 결과를 보관합니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Stores the requested result for OK, cancel, or system closure.</para>
+		/// \endif
+		/// </summary>
 		private bool? _requestedResult = null;
 
-		/// <summary>\brief Show()로 열렸을 때 결과를 전달하는 공개 프로퍼티. </summary>
+		/// <summary>
+		/// \if KO
+		/// <para>비모달 <see cref="Window.Show"/>로 열린 팝업의 결과를 가져옵니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Gets the result of a popup opened modelessly through <see cref="Window.Show"/>.</para>
+		/// \endif
+		/// </summary>
 		public bool? PopupResult => _requestedResult;
 
-		/// <summary>\brief Closing 재진입 방지 플래그. </summary>
+		/// <summary>
+		/// \if KO
+		/// <para>닫힘 처리 재진입을 방지하는 상태입니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Stores the state that prevents reentrant closing logic.</para>
+		/// \endif
+		/// </summary>
 		private bool _inClosing = false;
 
-		/// <summary>\brief 마지막으로 어떤 동작으로 닫기를 시도했는지 기록. </summary>
+		/// <summary>
+		/// \if KO
+		/// <para>마지막 닫기 시도 동작을 보관합니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Stores the action used for the last close attempt.</para>
+		/// \endif
+		/// </summary>
 		private PopupAction _lastAction = PopupAction.None;
 
-		/// <summary>\brief Win32 메시지 후킹을 위한 HwndSource. </summary>
+		/// <summary>
+		/// \if KO
+		/// <para>Win32 시스템 명령 메시지를 후킹할 창 원본을 보관합니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Stores the window source used to hook Win32 system-command messages.</para>
+		/// \endif
+		/// </summary>
 		private HwndSource? _hwndSrc;
 
+		/// <summary>
+		/// \if KO
+		/// <para>Win32 시스템 명령 메시지 식별자입니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Specifies the Win32 system-command message identifier.</para>
+		/// \endif
+		/// </summary>
 		private const int WM_SYSCOMMAND = 0x0112;
+		/// <summary>
+		/// \if KO
+		/// <para>Win32 창 닫기 시스템 명령입니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Specifies the Win32 close-window system command.</para>
+		/// \endif
+		/// </summary>
 		private const int SC_CLOSE = 0xF060;
 
 		/// <summary>
-		/// \brief DreamineBlinkPopupWindow 생성자.
-		/// \Param opt 팝업 옵션.
+		/// \if KO
+		/// <para>옵션에서 뷰 모델, 창 모드, 크기, 제목 및 최상위 상태를 초기화합니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Initializes the view model, window mode, size, title, and topmost state from options.</para>
+		/// \endif
 		/// </summary>
+		/// <param name="opt">
+		/// \if KO
+		/// <para>팝업 표시 및 동작 옵션입니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Popup display and behavior options.</para>
+		/// \endif
+		/// </param>
+		/// <exception cref="NullReferenceException">
+		/// \if KO
+		/// <para><paramref name="opt"/>가 <see langword="null"/>일 때 발생합니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Thrown when <paramref name="opt"/> is <see langword="null"/>.</para>
+		/// \endif
+		/// </exception>
 		public DreamineBlinkPopupWindow(BlinkPopupOptions opt)
 		{
 			InitializeComponent();
@@ -114,7 +233,22 @@ namespace Dreamine.UI.Wpf.Equipment.Popup
 			}
 		}
 
-		/// <summary>\brief 컨텐츠 렌더 완료 시점에 깜빡임 애니메이션을 시작합니다.</summary>
+		/// <summary>
+		/// \if KO
+		/// <para>콘텐츠 렌더링 후 옵션이 활성화되어 있으면 점멸 애니메이션을 시작합니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Starts blink animation after content rendering when enabled by options.</para>
+		/// \endif
+		/// </summary>
+		/// <param name="e">
+		/// \if KO
+		/// <para>콘텐츠 렌더링 이벤트 데이터입니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Content-rendered event data.</para>
+		/// \endif
+		/// </param>
 		protected override void OnContentRendered(EventArgs e)
 		{
 			base.OnContentRendered(e);
@@ -125,12 +259,29 @@ namespace Dreamine.UI.Wpf.Equipment.Popup
 		}
 
 		/// <summary>
-		/// \brief 창 닫기 직전 훅.
-		/// Details:
-		///  - OK/Cancel/SystemClose 동작에 대해 권한 인증이 필요한지 판정합니다.
-		///  - 인증이 필요하면 일단 닫기를 막고(e.Cancel = true), 다음 틱에서 LoginDialog를 띄웁니다.
-		///  - 이미 인증을 통과했거나, 인증이 필요 없는 경우 DialogResult를 반영하고 그대로 닫습니다.
+		/// \if KO
+		/// <para>닫기 동작을 기록하고 요청된 대화 결과를 적용하면서 재진입을 방지합니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Records the close action, applies the requested dialog result, and prevents reentrant closing.</para>
+		/// \endif
 		/// </summary>
+		/// <param name="e">
+		/// \if KO
+		/// <para>닫기 취소 상태를 포함하는 이벤트 데이터입니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Closing event data containing cancellation state.</para>
+		/// \endif
+		/// </param>
+		/// <exception cref="ArgumentNullException">
+		/// \if KO
+		/// <para><paramref name="e"/>가 <see langword="null"/>일 때 기본 구현에서 발생할 수 있습니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>May be thrown by the base implementation when <paramref name="e"/> is <see langword="null"/>.</para>
+		/// \endif
+		/// </exception>
 		protected override void OnClosing(CancelEventArgs e)
 		{
 			if (_lastAction == PopupAction.None)
@@ -159,7 +310,22 @@ namespace Dreamine.UI.Wpf.Equipment.Popup
 			}
 		}
 
-		/// <summary>\brief Win32 메시지 훅 등록.</summary>
+		/// <summary>
+		/// \if KO
+		/// <para>네이티브 창 원본을 확인하고 시스템 명령 메시지 후크를 등록합니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Resolves the native window source and installs the system-command message hook.</para>
+		/// \endif
+		/// </summary>
+		/// <param name="e">
+		/// \if KO
+		/// <para>원본 초기화 이벤트 데이터입니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Source-initialized event data.</para>
+		/// \endif
+		/// </param>
 		protected override void OnSourceInitialized(EventArgs e)
 		{
 			base.OnSourceInitialized(e);
@@ -167,7 +333,30 @@ namespace Dreamine.UI.Wpf.Equipment.Popup
 			_hwndSrc?.AddHook(WndProcHook);
 		}
 
-		/// <summary>\brief Alt+F4 SystemKey 선제 차단.</summary>
+		/// <summary>
+		/// \if KO
+		/// <para>옵션이 설정되면 Alt+F4 키 조합을 처리하여 창 닫기를 차단합니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Handles the Alt+F4 key combination to block closure when configured.</para>
+		/// \endif
+		/// </summary>
+		/// <param name="e">
+		/// \if KO
+		/// <para>미리보기 키 이벤트 데이터입니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Preview key-event data.</para>
+		/// \endif
+		/// </param>
+		/// <exception cref="NullReferenceException">
+		/// \if KO
+		/// <para><paramref name="e"/>가 <see langword="null"/>일 때 발생합니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Thrown when <paramref name="e"/> is <see langword="null"/>.</para>
+		/// \endif
+		/// </exception>
 		protected override void OnPreviewKeyDown(KeyEventArgs e)
 		{
 			if (_opt.BlockAltF4 &&
@@ -181,7 +370,62 @@ namespace Dreamine.UI.Wpf.Equipment.Popup
 			base.OnPreviewKeyDown(e);
 		}
 
-		/// <summary>\brief Win32 메시지 훅(Alt+F4/SC_CLOSE 차단).</summary>
+		/// <summary>
+		/// \if KO
+		/// <para>옵션이 설정된 경우 Win32 창 닫기 시스템 명령을 처리됨으로 표시합니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Marks the Win32 close-window system command as handled when configured.</para>
+		/// \endif
+		/// </summary>
+		/// <param name="hwnd">
+		/// \if KO
+		/// <para>메시지를 받은 창 핸들입니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>The handle of the receiving window.</para>
+		/// \endif
+		/// </param>
+		/// <param name="msg">
+		/// \if KO
+		/// <para>Win32 메시지 ID입니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>The Win32 message identifier.</para>
+		/// \endif
+		/// </param>
+		/// <param name="wParam">
+		/// \if KO
+		/// <para>메시지 명령 매개변수입니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>The message command parameter.</para>
+		/// \endif
+		/// </param>
+		/// <param name="lParam">
+		/// \if KO
+		/// <para>추가 메시지 매개변수입니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>The additional message parameter.</para>
+		/// \endif
+		/// </param>
+		/// <param name="handled">
+		/// \if KO
+		/// <para>처리 여부 출력값입니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>The handled-state output.</para>
+		/// \endif
+		/// </param>
+		/// <returns>
+		/// \if KO
+		/// <para>후크 처리 결과로 항상 0입니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>The hook result, always zero.</para>
+		/// \endif
+		/// </returns>
 		private IntPtr WndProcHook(
 			IntPtr hwnd,
 			int msg,
@@ -200,7 +444,14 @@ namespace Dreamine.UI.Wpf.Equipment.Popup
 			return IntPtr.Zero;
 		}
 
-		/// <summary>\brief 안전한 CloseAsync 트리거(다음 틱에서 CloseAsync 호출).</summary>
+		/// <summary>
+		/// \if KO
+		/// <para>애플리케이션 유휴 디스패처 틱에서 창 닫기를 시도하고 실패하면 한 번 재시도합니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Attempts to close the window on an application-idle dispatcher tick and retries once on failure.</para>
+		/// \endif
+		/// </summary>
 		private void RequestCloseNextTick()
 		{
 			if (!IsLoaded)
@@ -242,14 +493,52 @@ namespace Dreamine.UI.Wpf.Equipment.Popup
 			timer.Start();
 		}
 
-		/// <summary>\brief 창이 완전히 닫힐 때 깜빡임 애니메이션과 훅을 정리합니다.</summary>
+		/// <summary>
+		/// \if KO
+		/// <para>창이 닫힌 뒤 점멸 애니메이션과 Win32 후크를 정리합니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Cleans up blink animation and the Win32 hook after the window closes.</para>
+		/// \endif
+		/// </summary>
+		/// <param name="e">
+		/// \if KO
+		/// <para>닫힘 이벤트 데이터입니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Closed-event data.</para>
+		/// \endif
+		/// </param>
 		protected override void OnClosed(EventArgs e)
 		{
 			base.OnClosed(e);
 			StopBlink();
 		}
 
-		/// <summary>\brief 깜빡임(색상/불투명도) 애니메이션을 시작합니다.</summary>
+		/// <summary>
+		/// \if KO
+		/// <para>옵션의 색상·불투명도·간격·횟수로 배경 점멸 스토리보드를 만들고 시작합니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Creates and starts a background blink storyboard from option colors, opacities, interval, and count.</para>
+		/// \endif
+		/// </summary>
+		/// <exception cref="KeyNotFoundException">
+		/// \if KO
+		/// <para>창 리소스에 <c>RootBrush</c>가 없을 때 발생합니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Thrown when the window resources do not contain <c>RootBrush</c>.</para>
+		/// \endif
+		/// </exception>
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// \if KO
+		/// <para>점멸 간격 또는 반복 횟수가 애니메이션에서 허용되지 않을 때 발생할 수 있습니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>May be thrown when the blink interval or repeat count is invalid for animation.</para>
+		/// \endif
+		/// </exception>
 		private void StartBlink()
 		{
 			var rootBrushObj = Resources["RootBrush"];
@@ -305,7 +594,14 @@ namespace Dreamine.UI.Wpf.Equipment.Popup
 			_blinkSb.Begin(this, true);
 		}
 
-		/// <summary>\brief 깜빡임 애니메이션과 Win32 훅을 정지/해제합니다.</summary>
+		/// <summary>
+		/// \if KO
+		/// <para>진행 중인 점멸 스토리보드를 중지하고 Win32 메시지 후크를 제거합니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Stops the active blink storyboard and removes the Win32 message hook.</para>
+		/// \endif
+		/// </summary>
 		private void StopBlink()
 		{
 			_blinkSb?.Stop(this);
